@@ -14,6 +14,7 @@ export type SessionStatus = 'idle' | 'running' | 'ended'
 export type SessionRecord = {
   id?: string
   model?: string
+  effort?: string
   status: SessionStatus
   startTime?: number
   endTime?: number

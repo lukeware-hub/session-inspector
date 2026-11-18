@@ -13,7 +13,7 @@ import {
 } from '../domain/formatters'
 import { activeLoopAlert, compactionLimit, forecastTurns } from '../domain/insights'
 import { TABS, type InspectorState, type InspectorTab } from '../domain/models'
-import { mcpGroups, mcpServer, sessionDurationMs, slowestTools, toolDistribution, totalTokens } from '../domain/reducers'
+import { activeAgents, mcpGroups, mcpServer, sessionDurationMs, slowestTools, toolDistribution, totalTokens } from '../domain/reducers'
 import { contextLevel, levelLabel } from '../domain/thresholds'
 import { PANE_ID } from '../state/keys'
 import { readState, setTab, type Engine } from '../state/repository'
@@ -56,7 +56,7 @@ function overview({ ui, state, now, columns }: View) {
   const { session, stats, agents, contextReadings, usage, git, system, speed } = state
   const reading = contextReadings.at(-1)
   const level = reading && contextLevel(reading.percent)
-  const running = agents.filter(agent => agent.status === 'running').length
+  const running = activeAgents(agents)
   const mark = STATUS_MARK[session.status]
   const forecast = forecastSegment(state)
   const loop = activeLoopAlert(state.loop, now)
@@ -64,6 +64,7 @@ function overview({ ui, state, now, columns }: View) {
     <Box flexDirection="column">
       {field(ui, 'Session status', `${mark.glyph} ${session.status}`, columns, mark.color)}
       {field(ui, 'Current model', session.model ?? '—', columns)}
+      {field(ui, 'Effort', session.effort ?? '—', columns)}
       {field(ui, 'Context usage', reading && level ? `${meter(reading.percent)} ${formatPercent(reading.percent)}  ${levelLabel(level)}` : '—', columns, level && LEVEL_COLOR[level])}
       {field(ui, 'Context window', formatTokens(reading?.window), columns)}
       {field(ui, 'Turns left', forecast?.text ?? '—', columns, forecast?.color)}

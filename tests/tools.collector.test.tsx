@@ -30,7 +30,8 @@ test('tool calls are counted by name and passed on unchanged', async ($, on) => 
   await pane.unmount()
 
   const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
-  expect(await band.find({ type: 'Text', text: /^3 tools$/ })).toBeTruthy()
+  const lines = (await band.findAll({ type: 'Text' })).map(found => found.text)
+  expect(lines[lines.findIndex(text => text.trim() === 'tools') + 1]).toBe('3')
   await band.unmount()
 })
 

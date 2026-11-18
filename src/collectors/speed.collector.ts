@@ -1,12 +1,14 @@
 import type { On } from 'claude-code'
 
 import { addSpeed, recordCompaction, tokensPerSecond } from '../domain/reducers'
-import { changeSpeed, changeStats, logEvent } from '../state/repository'
+import { changeSession, changeSpeed, changeStats, logEvent } from '../state/repository'
 
-// Model speed per request, and the moments the conversation was compacted.
+// Model speed and effort per request, and the moments the conversation was compacted.
 export function registerSpeedCollector(on: On): void {
   on('turn.step', async function* ($, e, next) {
     const started = await $.clock.now()
+    const effort = e.effort
+    if (e.agentId === undefined && effort !== undefined) await changeSession($, session => ({ ...session, effort: String(effort) }))
     const result = yield* next(e)
     try {
       const speed = tokensPerSecond(result.usage?.output_tokens, (await $.clock.now()) - started)

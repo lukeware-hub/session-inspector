@@ -13,6 +13,7 @@ import {
   touchSession,
   type Engine,
 } from '../state/repository'
+import { syncAgents } from './agents.collector'
 import { captureGitBase, inBackground, refreshGit, sampleSystem } from './host.collector'
 import { refreshPressure } from './insights.collector'
 
@@ -42,6 +43,7 @@ export function registerSessionCollector(on: On): void {
       await syncSession($)
       await changeSession($, (session): SessionRecord => ({ ...session, status: 'running', lastActivity: at }))
       inBackground(sampleSystem($))
+      inBackground(syncAgents($))
     } else {
       await changeAgents($, agents => agentTurn(agents, agentId))
       await touchSession($, at)
@@ -62,6 +64,7 @@ export function registerSessionCollector(on: On): void {
       const label = `Turn finished (${e.reason}, ${formatDuration(e.durationMs)})`
       await logEvent($, { type: 'turn.complete', label, timestamp: at })
       inBackground(sampleSystem($))
+      inBackground(syncAgents($))
       inBackground(refreshGit($))
       inBackground(refreshPressure($))
     } else {

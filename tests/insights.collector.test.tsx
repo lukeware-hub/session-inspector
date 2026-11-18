@@ -22,7 +22,9 @@ test('a repeated call raises a loop alert in a toast, the band and the activity'
   expect(toasts).toEqual(['Possible loop: Edit src/a.ts repeated 4× in 1 min'])
 
   const band = await $.ui.mount({ ...BAND, surface: 'terminal' })
-  expect(await band.find({ type: 'Text', text: /^Loop: Edit src\/a\.ts repeated 4× in 1 min$/ })).toBeTruthy()
+  const bandLines = (await band.findAll({ type: 'Text' })).map(found => found.text)
+  expect(bandLines.map(text => text.trim())).toContain('Loop')
+  expect(bandLines).toContain('Edit src/a.ts repeated 4× in 1 min')
   await band.unmount()
 
   await $.command.run(open('activity'))
@@ -41,7 +43,7 @@ test('large results are listed with their file and counted per tool', async ($, 
   await $.command.run(open('context'))
   const pane = await $.ui.mount({ ...PANE, surface: 'terminal' })
   expect(await pane.find({ type: 'Text', text: /^Largest tool results$/ })).toBeTruthy()
-  expect(await pane.find({ type: 'Text', text: /^Read big\.json\s+▰*▱+\s+12k$/ })).toBeTruthy()
+  expect(await pane.find({ type: 'Text', text: /^Read big\.json\s+█*░+\s+12k$/ })).toBeTruthy()
   await pane.press({ key: 'tab-tools' })
   expect((await pane.find({ type: 'Text', text: /^Read / }))?.text).toMatch(/\s12k\s/)
   await pane.unmount()

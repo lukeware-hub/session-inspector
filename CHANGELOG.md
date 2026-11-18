@@ -9,6 +9,19 @@ All notable changes to this project are written here. The project follows [Seman
 - Context forecast: turns left before auto-compaction or a full window, in the band and the Context section.
 - What loads on every turn (memory files, MCP servers, skills, agents) and the largest tool results, in the Context section; result size per tool in the Tools section.
 - Loop detector: an alert when the same call repeats four times within three minutes or three calls fail in a row.
+- The effort of the last main request, in the band's header and on Overview.
+- Subagents working right now, in the band's Session row ("2 running of 5"), kept true by the engine's live agent list.
+- A colored mark on each row of the agent list under the prompt, a different color per agent: filled while it works, hollow once it stops.
+
+### Changed
+
+- Every figure in the band has a label, and every percentage (context, CPU, rate limits) uses the same ten-cell scale of full-height blocks.
+- Rate limits moved to their own band row.
+- The band is a grid: every column, label, meter and percentage lines up across rows, gaps grow with the width, and narrow bands drop whole columns from the right. A loop alert gets its own row.
+
+### Fixed
+
+- CPU and rate-limit bars below 70% were drawn without color; they now follow the context scale (green, amber from 70%, red from 95%).
 
 ## [0.1.0] - 2026-11-18
 

@@ -9,15 +9,16 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
 - **Footer band**: a framed panel fixed right above the prompt, always visible:
 
   ```
-  ╭──────────────────────────────────────────────────────────────────────╮
-  │ Session Inspector                       claude-opus-5-5   ● running  │
-  │ Context  ▰▰▰▰▰▰▱▱▱▱ 62%   124k / 200k   Normal                       │
-  │ Session  15m 02s   8 turns   34 tools   2 agents   $8.40   +127   −34│
-  │ System   CPU 4%   RAM 512 MB   69 tok/s   5h 38%   7d 12%            │
-  ╰──────────────────────────────────────────────────────────────────────╯
+  ╭──────────────────────────────────────────────────────────────────────────────────────╮
+  │ Session Inspector                          claude-opus-5-5   effort high   ● running │
+  │ Context  used ████░░░░░░ 45%   tokens 454k / 1M   level Normal                       │
+  │ Session  time 1h 14m   subagents 2 running of 5   turns 8   tools 82   cost $19.35     │
+  │ System   CPU █░░░░░░░░░ 5%   RAM 713 MB   speed 99 tok/s                             │
+  │ Limits   5h ██░░░░░░░░ 16%   7d ░░░░░░░░░░ 3%                                        │
+  ╰──────────────────────────────────────────────────────────────────────────────────────╯
   ```
 
-  When the band has less than five rows of room it drops the frame and keeps the rows.
+  Every figure has a label, every percentage uses the same ten-cell scale, the header shows the effort of the last request, and the Session row counts the subagents working right now. The Limits row appears when the account reports rate limits. When the band has less than five rows of room it drops the frame and keeps the rows.
 - **Inspector pane**: opened with `/inspector`, with eight sections you switch with the buttons or the keys 1 to 8:
   - **Overview**: status, model, context usage and window, tokens used, turns, tool calls, subagents, cost, lines changed, speed, CPU and memory, duration, last activity and event count.
   - **Context**: tokens in context, window size, tokens available, level, where auto-compaction runs, growth per turn and turns left, compactions, what fills the window (system prompt, tools, memory, messages), what loads on every turn (memory files, MCP servers, skills, agents), the largest tool results, and the last 12 readings.
@@ -27,6 +28,7 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
   - **Agents**: every subagent the session started, with type, status, task, turns, tool calls, duration, model and tools used.
   - **Files**: lines added and removed since the session began, and the files tools read or edited.
   - **System**: CPU and memory of the Claude Code process tree, and model speed in tokens per second.
+- **Agent list colors**: each row of the agent list under the prompt gets a mark of its own color, filled while the agent works and hollow once it stops, so several subagents are told apart at a glance.
 - **Context alerts**: a notification when context usage rises into High (85% or more) or Critical (95% or more).
 - **Context forecast**: the band says how many turns are left before auto-compaction (or a full window) at the pace of the last turns, in amber from three turns and in red on the last one.
 - **Loop detector**: a notification, and a red line in the band, when the same call repeats four times within three minutes or three calls fail in a row, so a stuck agent is caught before it burns tokens.

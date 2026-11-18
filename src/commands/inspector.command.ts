@@ -2,6 +2,7 @@ import type { On } from 'claude-code'
 
 import { TABS, type InspectorTab } from '../domain/models'
 import { PANE_ID, PANE_ROWS, PANE_TITLE } from '../state/keys'
+import { syncAgents } from '../collectors/agents.collector'
 import { inBackground, refreshGit, sampleSystem } from '../collectors/host.collector'
 import { setTab, type Engine } from '../state/repository'
 
@@ -24,6 +25,7 @@ export function registerInspectorCommandHandler(on: On): void {
     const tab = parseTab(e.args)
     if (tab) await setTab($, tab)
     inBackground(sampleSystem($))
+    inBackground(syncAgents($))
     inBackground(refreshGit($))
     // Seated inline the pane sits right above the prompt; `rows` asks for room for every section.
     const opened = await $.ui.open({ id: PANE_ID, title: PANE_TITLE, rows: PANE_ROWS })

@@ -3,6 +3,7 @@ import { describe, expect, test } from 'claude-code/testing'
 import { bar, fit, formatDuration, formatPercent, formatTokens, sparkline } from '../src/domain/formatters'
 import { contextLevel, contextPercent, isAlertRise } from '../src/domain/thresholds'
 import { parseTab } from '../src/commands/inspector.command'
+import { loadColor } from '../src/ui/components'
 
 describe('context thresholds', () => {
   test('levels follow the bands 0-69, 70-84, 85-94, 95-100', () => {
@@ -32,6 +33,14 @@ describe('context thresholds', () => {
     expect(isAlertRise('high', 'high')).toBe(false)
     expect(isAlertRise('critical', 'high')).toBe(false)
     expect(isAlertRise('normal', 'attention')).toBe(false)
+  })
+})
+
+describe('load colors', () => {
+  test('CPU and limit bars are colored at every level, on the context scale', () => {
+    expect([0, 16, 69, 70, 84, 85, 94, 95, 100].map(loadColor)).toEqual([
+      'success', 'success', 'success', 'warning', 'warning', 'warning', 'warning', 'error', 'error',
+    ])
   })
 })
 

@@ -12,19 +12,21 @@ Session Inspector is an Operate surface drawn in a terminal: the person is in a 
 | Role | Theme key | Used for |
 | --- | --- | --- |
 | Brand mark | `claude` | The title "Session Inspector" and the active section only. |
-| Good | `success` | Running status, Normal context level, healthy figures. |
+| Good | `success` | Running status, Normal context level, CPU and rate limits below 70%. |
 | Watch | `warning` | Attention and High context, limits at 70% or more. |
 | Danger | `error` | Critical context, failed and denied tool calls, limits at 95% or more. |
 | Secondary | dim text | Labels, units, separators, idle status, empty states. |
 | Body | default text | Every value. |
+| Agent marks | fixed hues | One color per row of the agent list (green, amber, blue, pink, cyan, lime, orange), so agents side by side are told apart; the only colors that are not theme keys. |
 
 ## Shapes
 
-- **The band** is one rounded frame (`borderStyle: round`, dim border). Its first row holds the title on the left and the session status on the right; then one row per line of figures, each led by a label in a fixed 9-column label column (`Context`, `Session`, `System`).
+- **The band** is one rounded frame (`borderStyle: round`, dim border). Its first row holds the title on the left and the model, the effort and the session status on the right; then one row per line of figures, each led by a label in a fixed 9-column label column (`Context`, `Session`, `System`, and `Limits` when the account reports rate limits).
+- Every figure carries its own dim label before its value (`used`, `tokens`, `level`, `time`, `subagents`, `turns`, `tools`, `cost`, `CPU`, `RAM`, `speed`, `5h`).
 - When the band has fewer than five rows of room, the frame is dropped and the rows stay.
-- **Meters** are ten cells of `▰` (filled) and `▱` (empty), colored by level. They are the only graphic in the band.
+- **Meters** are one scale for every percentage: ten full-height cells of `█` (filled) and `░` (empty), colored by level. They are the only graphic in the band.
 - **Status glyphs**: `●` running, `○` idle, `■` ended. No other glyph stands in for an icon.
-- Figures are separated by three spaces, never by bars or middle dots.
+- **The grid**: the rows share columns. Column N has one width in every row, labels in a column are padded to one width so values and meters start on the same cell, and percentages are right-aligned. Gaps are 3 cells and widen with the room up to 8; on a narrow band whole columns leave from the right in every row alike. A missing value keeps its column with a dash, and a message (waiting, a loop alert) spans its row. Never bars or middle dots between figures.
 
 ## Pane
 

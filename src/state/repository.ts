@@ -34,7 +34,7 @@ type Change<T> = (value: T) => T
 
 // The only file that reads or writes $.state: the engine's scan reads atoms only where they are used.
 // Change a shape tag when that value's fields change: values an older version stored are then read as the initial.
-const sessionState = atom({ plugin: 'session-inspector', key: 'session' } as const, EMPTY_SESSION, { shape: 'session-1' })
+const sessionState = atom({ plugin: 'session-inspector', key: 'session' } as const, EMPTY_SESSION, { shape: 'session-2' })
 const contextState = atom({ plugin: 'session-inspector', key: 'context' } as const, [], { shape: 'context-1' })
 const activityState = atom({ plugin: 'session-inspector', key: 'activity' } as const, EMPTY_ACTIVITY, { shape: 'activity-1' })
 const statsState = atom({ plugin: 'session-inspector', key: 'stats' } as const, EMPTY_STATS, { shape: 'stats-2' })

@@ -53,7 +53,8 @@ The state lives in Claude Code's session state (`$.state`), declared in the cont
 
 ## Interface
 
-- **Footer band**: a `ui.render` hook on the `AbovePrompt` component. It draws a rounded frame with the title, model and status, then three labelled rows (Context, Session, System), each fitted to the width by dropping whole figures from the end. With less than five rows of room it drops the frame. It stays out of the way of a survey. Its look is described in [DESIGN.md](../DESIGN.md).
+- **Footer band**: a `ui.render` hook on the `AbovePrompt` component. It draws a rounded frame with the title, model, effort and status, then up to four labelled rows (Context, Session, System, Limits) whose figures each carry a label, each fitted to the width by dropping whole figures from the end. With less than five rows of room it drops the frame. It stays out of the way of a survey. Its look is described in [DESIGN.md](../DESIGN.md).
+- **Agent rows**: a `ui.render` hook on the `AgentRow` component puts a colored mark before each row of the agent list and keeps the row Claude Code draws (`src/ui/agent-row.tsx`). The engine's own bullet cannot be recolored, so the mark sits beside it.
 - **Pane**: a `ui.render` hook on the `Pane` component with the id `session-inspector`, opened by `$.ui.open` with a requested height so that, inline, every section fits. A row of buttons with hotkeys 1 to 8 switches the section, stored in the `tab` value.
 - Colors are theme keys (`claude`, `success`, `warning`, `error`, `diffAdded`, `diffRemoved`), so the mod follows the person's theme, dark or light.
 - Every element comes from `$.ui.resolve(e)`, the table of the surface that draws, so the same tree draws on the terminal and the desktop app.

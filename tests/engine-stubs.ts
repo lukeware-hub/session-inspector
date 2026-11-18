@@ -1,4 +1,4 @@
-import type { On, SessionContextBreakdown } from 'claude-code'
+import type { AgentInfo, On, SessionContextBreakdown } from 'claude-code'
 import { mock } from 'claude-code/testing'
 
 export const SESSION_ID = 'session-test-1'
@@ -18,6 +18,8 @@ export type Session = {
   toolText?: Record<string, string>
   // The /context breakdown the session reports; read at each call so a test can change it.
   breakdown?: Partial<SessionContextBreakdown>
+  // The live agent list the engine answers, by id and status.
+  liveAgents?: { id: string; status: string }[]
 }
 
 // Stands for the engine beneath the plugin: each hook answers as a session does.
@@ -67,6 +69,8 @@ export function stubEngine(on: On, session: Session = { id: SESSION_ID }) {
     session.toolFails ? { result: {}, isError: true as const, text: 'failed' } : { result: {}, text: session.toolText?.[String(e.tool)] },
   )
   on('agent.spawn', () => ({ model: 'haiku', agentId: 'agent-1' }))
+  // Only id and status matter to the mod; the rest of an agent's record is left out.
+  on('agent.list', () => ({ value: (session.liveAgents ?? []) as unknown as AgentInfo[] }))
   return { clock, toasts, commands, panes, ran }
 }
 
@@ -99,7 +103,7 @@ export const BAND = {
     hasSurvey: false,
     isCollapsed: false,
     isWorking: false,
-    maxRows: 6,
+    maxRows: 8,
     bodyColumns: 160,
     scroll: { offset: 0, bodyRows: 6 },
     view: {},

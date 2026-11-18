@@ -8,6 +8,7 @@ import { registerSpeedCollector } from '../src/collectors/speed.collector'
 import { registerToolsCollector } from '../src/collectors/tools.collector'
 import { registerInspectorCommand, registerInspectorCommandHandler } from '../src/commands/inspector.command'
 import { registerAbovePrompt } from '../src/ui/above-prompt'
+import { registerAgentRow } from '../src/ui/agent-row'
 import { registerInspectorPane } from '../src/ui/inspector-pane'
 
 // Session Inspector observes the session: every hook passes the event on unchanged.
@@ -28,5 +29,6 @@ export const register: Register = on => {
   registerSpeedCollector(on)
   registerInspectorCommandHandler(on)
   registerAbovePrompt(on)
+  registerAgentRow(on)
   registerInspectorPane(on)
 }

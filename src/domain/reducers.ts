@@ -232,6 +232,22 @@ function mapAgent(
   return agents.map(agent => (agent.id === id ? change(agent) : agent))
 }
 
+const ACTIVE_STATUS = new Set(['pending', 'running', 'waiting'])
+
+// Subagents working now: started and not yet finished, failed or stopped.
+export function activeAgents(agents: readonly AgentRecord[]): number {
+  return agents.filter(agent => ACTIVE_STATUS.has(agent.status)).length
+}
+
+// Takes each known agent's status from the engine's live list; agents the list no longer has keep theirs.
+export function syncAgentStatuses(agents: readonly AgentRecord[], live: readonly { id: string; status: string }[]): AgentRecord[] {
+  const statuses = new Map(live.map(agent => [agent.id, agent.status]))
+  return agents.map(agent => {
+    const status = statuses.get(agent.id)
+    return status === undefined || status === agent.status ? agent : { ...agent, status }
+  })
+}
+
 const REASON_STATUS: Record<string, string> = {
   answer: 'completed',
   aborted: 'aborted',

@@ -1,7 +1,13 @@
 import type { On } from 'claude-code'
 
-import { spawnAgent } from '../domain/reducers'
-import { changeAgents, logEvent, touchSession } from '../state/repository'
+import { spawnAgent, syncAgentStatuses } from '../domain/reducers'
+import { changeAgents, logEvent, touchSession, type Engine } from '../state/repository'
+
+// Brings the recorded agents' statuses in line with the engine's live list, so a stopped agent stops counting as running.
+export async function syncAgents($: Engine): Promise<void> {
+  const live = await $.agent.list()
+  await changeAgents($, agents => syncAgentStatuses(agents, live))
+}
 
 // Records an agent only once the engine says it started, with the id it gave.
 export function registerAgentsCollector(on: On): void {

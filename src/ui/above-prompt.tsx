@@ -1,72 +1,114 @@
 import type { On } from 'claude-code'
 
-import { formatBytes, formatDuration, formatPercent, formatTokens, formatUsd, limitLabel } from '../domain/formatters'
-import type { InspectorState } from '../domain/models'
+import { formatBytes, formatDuration, formatTokens, formatUsd, limitLabel } from '../domain/formatters'
 import { activeLoopAlert } from '../domain/insights'
-import { sessionDurationMs } from '../domain/reducers'
+import type { InspectorState } from '../domain/models'
+import { activeAgents, sessionDurationMs } from '../domain/reducers'
 import { contextLevel, levelLabel } from '../domain/thresholds'
 import { readState } from '../state/repository'
-import { LEVEL_COLOR, STATUS_MARK, forecastSegment, labelledRow, loadColor, meter, type Segment, type Ui } from './components'
+import {
+  LEVEL_COLOR,
+  STATUS_MARK,
+  forecastSegment,
+  gridLine,
+  layoutGrid,
+  loadColor,
+  meterText,
+  type GridRow,
+  type Segment,
+  type Ui,
+} from './components'
 
 export const BAND_LABEL_WIDTH = 9
 
-export type BandRow = { label: string; segments: Segment[] }
+// A figure with no value yet: its label stays, so the grid keeps its columns.
+function missing(label: string): Segment {
+  return { label, text: '—', dim: true }
+}
 
-function contextRow(state: InspectorState): BandRow {
+function contextRow(state: InspectorState): GridRow {
   const reading = state.contextReadings.at(-1)
-  if (!reading) return { label: 'Context', segments: [{ text: 'waiting for the first response', dim: true }] }
+  if (!reading) return { label: 'Context', cells: [], span: { text: 'waiting for the first response', dim: true } }
   const level = contextLevel(reading.percent)
   const color = LEVEL_COLOR[level]
-  const forecast = forecastSegment(state)
   return {
     label: 'Context',
-    segments: [
-      { text: `${meter(reading.percent)} ${formatPercent(reading.percent)}`, color },
-      { text: `${formatTokens(reading.tokens)} / ${formatTokens(reading.window)}` },
-      { text: levelLabel(level), color, bold: level === 'high' || level === 'critical', dim: level === 'normal' },
-      ...(forecast ? [forecast] : []),
+    cells: [
+      { label: 'used', text: meterText(reading.percent), color },
+      { label: 'tokens', text: `${formatTokens(reading.tokens)} / ${formatTokens(reading.window)}` },
+      { label: 'level', text: levelLabel(level), color, bold: level === 'high' || level === 'critical' },
+      forecastSegment(state) ?? missing('forecast'),
     ],
   }
 }
 
-function sessionRow(state: InspectorState, now: number): BandRow {
+// Subagents working right now, out of all this session started; green while any works.
+export function subagentsSegment(agents: InspectorState['agents']): Segment {
+  const running = activeAgents(agents)
+  if (!agents.length) return { label: 'subagents', text: '0 running', dim: true }
+  return { label: 'subagents', text: `${running} running of ${agents.length}`, color: running ? 'success' : undefined, bold: running > 0 }
+}
+
+function sessionRow(state: InspectorState, now: number): GridRow {
   const { stats, agents, usage, git } = state
+  const hasLines = git.isRepo && git.checkedAt !== undefined
+  return {
+    label: 'Session',
+    cells: [
+      { label: 'time', text: formatDuration(sessionDurationMs(state.session, now)) },
+      subagentsSegment(agents),
+      { label: 'turns', text: String(stats.totalTurns) },
+      { label: 'tools', text: String(stats.totalToolCalls) },
+      usage.costUsd === undefined ? missing('cost') : { label: 'cost', text: formatUsd(usage.costUsd) },
+      hasLines
+        ? { label: 'lines', text: `+${git.added}`, color: 'diffAdded', more: [{ text: ` −${git.removed}`, color: 'diffRemoved' }] }
+        : missing('lines'),
+    ],
+  }
+}
+
+function systemRow({ system, speed }: InspectorState): GridRow {
+  if (system.cpuPercent === undefined && system.memoryBytes === undefined && speed.tokensPerSecond === undefined) {
+    return { label: 'System', cells: [], span: { text: 'measuring after the first turn', dim: true } }
+  }
+  return {
+    label: 'System',
+    cells: [
+      system.cpuPercent === undefined ? missing('CPU') : { label: 'CPU', text: meterText(system.cpuPercent), color: loadColor(system.cpuPercent) },
+      system.memoryBytes === undefined ? missing('RAM') : { label: 'RAM', text: formatBytes(system.memoryBytes) },
+      speed.tokensPerSecond === undefined ? missing('speed') : { label: 'speed', text: `${speed.tokensPerSecond} tok/s` },
+    ],
+  }
+}
+
+// One row for the rate-limit windows, only when the account reports them.
+function limitsRow({ usage }: InspectorState): GridRow | undefined {
+  if (!usage.rateLimits.length) return undefined
+  return {
+    label: 'Limits',
+    cells: usage.rateLimits.map(limit => ({ label: limitLabel(limit.kind), text: meterText(limit.percentUsed), color: loadColor(limit.percentUsed) })),
+  }
+}
+
+// A loop alert gets a row of its own, across the whole width, while it is recent.
+function alertRow(state: InspectorState, now: number): GridRow | undefined {
   const loop = activeLoopAlert(state.loop, now)
-  const segments: Segment[] = [
-    ...(loop ? [{ text: `Loop: ${loop}`, color: 'error' as const, bold: true }] : []),
-    { text: formatDuration(sessionDurationMs(state.session, now)) },
-    { text: `${stats.totalTurns} turns` },
-    { text: `${stats.totalToolCalls} tools` },
-  ]
-  if (agents.length) segments.push({ text: `${agents.length} agents` })
-  if (usage.costUsd !== undefined) segments.push({ text: formatUsd(usage.costUsd) })
-  if (git.isRepo && git.checkedAt !== undefined) {
-    segments.push({ text: `+${git.added}`, color: 'diffAdded' })
-    segments.push({ text: `−${git.removed}`, color: 'diffRemoved' })
-  }
-  return { label: 'Session', segments }
+  return loop ? { label: 'Loop', cells: [], span: { text: loop, color: 'error', bold: true } } : undefined
 }
 
-function systemRow({ system, speed, usage }: InspectorState): BandRow {
-  const segments: Segment[] = []
-  if (system.cpuPercent !== undefined) segments.push({ text: `CPU ${system.cpuPercent}%` })
-  if (system.memoryBytes !== undefined) segments.push({ text: `RAM ${formatBytes(system.memoryBytes)}` })
-  if (speed.tokensPerSecond !== undefined) segments.push({ text: `${speed.tokensPerSecond} tok/s` })
-  for (const limit of usage.rateLimits) {
-    segments.push({ text: `${limitLabel(limit.kind)} ${Math.round(limit.percentUsed)}%`, color: loadColor(limit.percentUsed) })
-  }
-  return { label: 'System', segments: segments.length ? segments : [{ text: 'measuring after the first turn', dim: true }] }
+// The band's rows, most important first.
+export function bandRows(state: InspectorState, now: number): GridRow[] {
+  return [contextRow(state), alertRow(state, now), sessionRow(state, now), systemRow(state), limitsRow(state)].filter(
+    (row): row is GridRow => row !== undefined,
+  )
 }
 
-// The band's rows of figures, most important first.
-export function bandRows(state: InspectorState, now: number): BandRow[] {
-  return [contextRow(state), sessionRow(state, now), systemRow(state)]
-}
+export const BAND_MAX_ROWS = 4
 
 // Rows the band shows: the frame and title need five rows of room; below that, bare rows.
 export function bandLayout(maxRows: number): { isFramed: boolean; rows: number } {
-  if (maxRows >= 5) return { isFramed: true, rows: Math.min(3, maxRows - 3) }
-  return { isFramed: false, rows: Math.max(1, Math.min(3, maxRows)) }
+  if (maxRows >= 5) return { isFramed: true, rows: Math.min(BAND_MAX_ROWS, maxRows - 3) }
+  return { isFramed: false, rows: Math.max(1, Math.min(BAND_MAX_ROWS, maxRows)) }
 }
 
 export function registerAbovePrompt(on: On): void {
@@ -77,10 +119,8 @@ export function registerAbovePrompt(on: On): void {
     const [state, now] = await Promise.all([readState($), $.clock.now()])
     const layout = bandLayout(e.props.maxRows)
     const columns = e.props.bodyColumns - (layout.isFramed ? 4 : 0)
-    const rows = bandRows(state, now)
-      .slice(0, layout.rows)
-      .map(row => labelledRow(ui, row.label, row.segments, columns, BAND_LABEL_WIDTH))
-    if (!layout.isFramed) return <Box flexDirection="column">{rows}</Box>
+    const lines = layoutGrid(bandRows(state, now).slice(0, layout.rows), columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
+    if (!layout.isFramed) return <Box flexDirection="column">{lines}</Box>
 
     const mark = STATUS_MARK[state.session.status]
     return (
@@ -91,12 +131,13 @@ export function registerAbovePrompt(on: On): void {
           </Text>
           <Box flexDirection="row" columnGap={3}>
             {state.session.model && <Text dimColor>{state.session.model}</Text>}
+            {state.session.effort && <Text dimColor>{`effort ${state.session.effort}`}</Text>}
             <Text color={mark.color} dimColor={!mark.color}>
               {`${mark.glyph} ${state.session.status}`}
             </Text>
           </Box>
         </Box>
-        {rows}
+        {lines}
       </Box>
     )
   })

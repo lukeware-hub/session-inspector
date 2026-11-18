@@ -4,9 +4,9 @@ import { bandLayout } from '../src/ui/above-prompt'
 import { BAND, MODEL, PANE, USAGE, stubEngine } from './engine-stubs'
 
 test('the frame needs five rows; below that the rows stay bare', () => {
-  expect(bandLayout(8)).toEqual({ isFramed: true, rows: 3 })
+  expect(bandLayout(8)).toEqual({ isFramed: true, rows: 4 })
   expect(bandLayout(5)).toEqual({ isFramed: true, rows: 2 })
-  expect(bandLayout(4)).toEqual({ isFramed: false, rows: 3 })
+  expect(bandLayout(4)).toEqual({ isFramed: false, rows: 4 })
   expect(bandLayout(1)).toEqual({ isFramed: false, rows: 1 })
 })
 
@@ -25,13 +25,54 @@ test('the framed band shows title, model, status and the three rows', async ($, 
     expect(lines).toContain('Session Inspector')
     expect(lines).toContain(MODEL)
     expect(lines).toContain('○ idle')
-    expect(lines).toContain('▰▰▰▰▰▰▰▰▰▱ 90%')
+    expect(lines).toContain('█████████░  90%')
     expect(lines).toContain('180k / 200k')
     expect(lines).toContain('High')
     expect(lines).toContain('$3.50')
-    expect(lines).toContain('5h 97%')
+    for (const label of ['used', 'tokens', 'level', 'time', 'turns', 'tools', 'cost', '5h']) expect(lines.map(text => text.trim())).toContain(label)
+    expect(lines.map(text => text.trim())).toContain('Limits')
+    expect(lines).toContain('██████████  97%')
+    expect((await band.find({ type: 'Text', text: '██████████  97%' }))?.props.color).toBe('error')
     await band.unmount()
   }
+})
+
+test('the effort of the last main request is shown beside the model', async ($, on) => {
+  stubEngine(on)
+  on('turn.step', async function* (_, e) {
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn' as const, usage: null }
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  for await (const _ of $.turn.step({ turnId: 't1', index: 0, model: MODEL, effort: 'xhigh', messageCount: 1 })) {
+    // No chunks.
+  }
+  for await (const _ of $.turn.step({ turnId: 't2', index: 0, model: MODEL, effort: 'low', messageCount: 1, agentId: 'sub-1' })) {
+    // A subagent's effort does not replace the session's.
+  }
+  const band = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect((await band.findAll({ type: 'Text' })).map(found => found.text)).toContain('effort xhigh')
+  await band.unmount()
+})
+
+test('CPU uses the same ten-cell scale as the context', async ($, on) => {
+  // CPU time grows 5 s between two samples 10 s apart: half a core.
+  const cpuTimes = ['00:00:02', '00:00:07']
+  let sample = 0
+  const { clock } = stubEngine(on, {
+    id: 'session-test-1',
+    host: { '/bin/sh': () => `50\n10 1 524288 ${cpuTimes[Math.min(sample++, 1)]} claude\n50 10 100 00:00:00 sh\n` },
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await clock.advance(10_000)
+  await $.turn.start({ text: 'go', turnId: 't1' })
+  const band = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const lines = (await band.findAll({ type: 'Text' })).map(found => found.text)
+  expect(lines.map(text => text.trim())).toContain('CPU')
+  expect(lines).toContain('█████░░░░░  50%')
+  expect((await band.find({ type: 'Text', text: '█████░░░░░  50%' }))?.props.color).toBe('success')
+  expect(lines.map(text => text.trim())).toContain('RAM')
+  expect(lines).toContain('512 MB')
+  await band.unmount()
 })
 
 test('a band without room drops the frame', async ($, on) => {
