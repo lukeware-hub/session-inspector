@@ -28,7 +28,7 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
   - **Agents**: every subagent the session started, with type, status, task, turns, tool calls, duration, model and tools used.
   - **Files**: lines added and removed since the session began, and the files tools read or edited.
   - **System**: CPU and memory of the Claude Code process tree, model speed in tokens per second, and the computer's Wi-Fi download and upload.
-- **Wi-Fi traffic**: the band's System row shows how many MB/s (1 MB = 1024 × 1024 bytes) the computer's Wi-Fi receives and sends, read every 2 seconds; it says `off` when no Wi-Fi adapter is up.
+- **Wi-Fi traffic**: the band's System row shows how many MB/s (1 MB = 1024 × 1024 bytes) the computer's Wi-Fi receives and sends, read every 5 seconds; it says `off` when no Wi-Fi adapter is up.
 - **Agent list colors**: each row of the agent list under the prompt gets a mark of its own color, filled while the agent works and hollow once it stops, so several subagents are told apart at a glance.
 - **Context alerts**: a notification when context usage rises into High (85% or more) or Critical (95% or more).
 - **Context forecast**: the band says how many turns are left before auto-compaction (or a full window) at the pace of the last turns, in amber from three turns and in red on the last one.

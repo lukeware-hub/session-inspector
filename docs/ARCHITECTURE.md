@@ -39,7 +39,7 @@ Every hook returns what `next(e)` returns and is registered with `.catch(($, e, 
 
 The insights collector (`src/collectors/insights.collector.ts`) adds what helps a developer act: the context size at the end of each main turn and the auto-compaction threshold (from a local `/context` estimate), the largest tool results, and the loop detector. Its rules are pure functions in `src/domain/insights.ts`.
 
-The host collector (`src/collectors/host.collector.ts`) runs read-only local commands through `$.process.run`: `git` for line counts, the process list for CPU and memory, and the Wi-Fi byte counters on a 2-second `$.clock.every` timer started at `session.start` (see [SECURITY.md](../SECURITY.md)). It runs beside the event, never awaited by it, and its failures are dropped. The parsing is pure and lives in `src/domain/host.ts` and `src/domain/wifi.ts`.
+The host collector (`src/collectors/host.collector.ts`) runs read-only local commands through `$.process.run`: `git` for line counts, the process list for CPU and memory, and the Wi-Fi byte counters on a 5-second `$.clock.every` timer started at `session.start` (see [SECURITY.md](../SECURITY.md)). It runs beside the event, never awaited by it, and its failures are dropped. The parsing is pure and lives in `src/domain/host.ts` and `src/domain/wifi.ts`.
 
 ## State
 

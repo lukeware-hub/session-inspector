@@ -13,7 +13,7 @@ import { addWifiSample, parseWifiCounters, wifiCommand } from '../domain/wifi'
 import { changeGit, changeSystem, changeWifi, readGit, readSystem, type Engine } from '../state/repository'
 
 const SAMPLE_EVERY_MS = 10_000
-const WIFI_EVERY_MS = 2_000
+const WIFI_EVERY_MS = 5_000
 const COMMAND_TIMEOUT_MS = 10_000
 
 // Runs a read-only host command; undefined when it cannot run or fails.
@@ -69,7 +69,7 @@ export async function sampleWifi($: Engine): Promise<void> {
   }
 }
 
-// Reads the Wi-Fi traffic now and every two seconds; a new session start replaces the timer.
+// Reads the Wi-Fi traffic now and every five seconds; a new session start replaces the timer.
 export function startWifiSampler($: Engine): void {
   wifiTimer?.cancel()
   inBackground(sampleWifi($))

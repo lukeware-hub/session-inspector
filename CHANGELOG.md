@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Wi-Fi traffic is read every 5 seconds instead of every 2.
+
 ## [0.3.0] - 2026-11-18
 
 ### Added
