@@ -6,7 +6,7 @@ All notable changes to this project are written here. The project follows [Seman
 
 ### Fixed
 
-- On a wide band the header's model, effort and status ended at the frame's edge, far right of the figures; they now end on the same column as the last figure.
+- On a wide band the figures stopped short of the right edge while the model, effort and status sat on it; the gaps between columns now share the whole width, so the last column ends on the right edge, under the status.
 
 ## [0.3.1] - 2026-11-18
 
