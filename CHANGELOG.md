@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- A `speed_test` tool the agent can call to measure the internet download and upload speed in megabits per second and, on Windows, read the Wi-Fi link (band, channel, signal, link rates).
+
 ## [0.2.0] - 2026-11-18
 
 ### Added

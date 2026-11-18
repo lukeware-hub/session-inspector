@@ -13,7 +13,7 @@ const SAMPLE_EVERY_MS = 10_000
 const COMMAND_TIMEOUT_MS = 10_000
 
 // Runs a read-only host command; undefined when it cannot run or fails.
-async function run($: Engine, argv: readonly string[]): Promise<string | undefined> {
+export async function run($: Engine, argv: readonly string[]): Promise<string | undefined> {
   const done = await $.process.run(argv, { timeoutMs: COMMAND_TIMEOUT_MS })
   return done.exitCode === 0 ? done.stdout : undefined
 }

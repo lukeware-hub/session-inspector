@@ -20,6 +20,7 @@ export type Session = {
   breakdown?: Partial<SessionContextBreakdown>
   // The live agent list the engine answers, by id and status.
   liveAgents?: { id: string; status: string }[]
+  platform?: 'windows' | 'linux'
 }
 
 // Stands for the engine beneath the plugin: each hook answers as a session does.
@@ -33,7 +34,7 @@ export function stubEngine(on: On, session: Session = { id: SESSION_ID }) {
   on('session.model', () => ({ value: MODEL }))
   on('session.cwd', () => ({ value: CWD }))
   on('session.repo', () => ({ value: session.host?.git ? { root: CWD, remote: null, internal: false, name: 'app' } : null }))
-  on('session.info', () => ({ value: { transcriptPath: '', platform: 'linux' as const } }))
+  on('session.info', () => ({ value: { transcriptPath: '', platform: session.platform ?? 'linux' } }))
   on('process.run', (_, e) => {
     ran.push([...e.argv])
     const answer = session.host?.[e.argv[0] ?? '']
@@ -52,6 +53,7 @@ export function stubEngine(on: On, session: Session = { id: SESSION_ID }) {
     commands.push(e.name)
     return { value: { command: e.name } }
   })
+  on('tool.register', (_, e) => ({ value: { tool: `mcp__session-inspector__${e.name}` } }))
   on('ui.open', (_, e) => {
     panes.push(e.id)
     return { value: session.isPlaced === false ? { isPlaced: false, reason: 'no room' } : { isPlaced: true } }

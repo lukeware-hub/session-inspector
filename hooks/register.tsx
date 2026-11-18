@@ -6,6 +6,7 @@ import { inBackground, sampleSystem } from '../src/collectors/host.collector'
 import { registerSessionCollector, syncSession } from '../src/collectors/session.collector'
 import { registerSpeedCollector } from '../src/collectors/speed.collector'
 import { registerToolsCollector } from '../src/collectors/tools.collector'
+import { registerSpeedTestHandler, registerSpeedTestTool } from '../src/tools/speed-test.tool'
 import { registerInspectorCommand, registerInspectorCommandHandler } from '../src/commands/inspector.command'
 import { registerAbovePrompt } from '../src/ui/above-prompt'
 import { registerAgentRow } from '../src/ui/agent-row'
@@ -16,6 +17,7 @@ export const register: Register = on => {
   // Runs again on each hot reload; the values of the same session are kept.
   on('session.start', async ($, e, next) => {
     await registerInspectorCommand($)
+    await registerSpeedTestTool($)
     await syncSession($)
     await recordContext($, (await $.session.usage()).context)
     inBackground(sampleSystem($))
@@ -28,6 +30,7 @@ export const register: Register = on => {
   registerAgentsCollector(on)
   registerSpeedCollector(on)
   registerInspectorCommandHandler(on)
+  registerSpeedTestHandler(on)
   registerAbovePrompt(on)
   registerAgentRow(on)
   registerInspectorPane(on)

@@ -32,6 +32,7 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
 - **Context alerts**: a notification when context usage rises into High (85% or more) or Critical (95% or more).
 - **Context forecast**: the band says how many turns are left before auto-compaction (or a full window) at the pace of the last turns, in amber from three turns and in red on the last one.
 - **Loop detector**: a notification, and a red line in the band, when the same call repeats four times within three minutes or three calls fail in a row, so a stuck agent is caught before it burns tokens.
+- **Speed test tool**: the agent can call `speed_test` (listed as `mcp__session-inspector__speed_test`) to measure this machine's internet download and upload speed in megabits per second against `speed.cloudflare.com` and, on Windows, read the Wi-Fi link with `netsh`. It answers `{"downloadMbps":424,"uploadMbps":397,"wifi":{"ssid":"Home","band":"5 GHz","channel":116,"signalPercent":83,"rssi":-60,"receiveMbps":865,"transmitMbps":721}}`, with `wifi` null on cable or on macOS and Linux. It takes about 10 to 30 seconds and moves about 260 MB.
 
 Context levels: Normal from 0% to 69%, Attention from 70% to 84%, High from 85% to 94%, Critical from 95% to 100%.
 
@@ -104,7 +105,7 @@ Opens the Tools section: each tool that ran in this session with its number of r
 
 ## Privacy and security
 
-The mod only observes. It never changes a prompt, a response, a tool call or a permission, never blocks a tool and never approves anything. It keeps only names, ids, counts, times, token figures and the paths of files tools read or edited, in the session's memory: never other tool arguments, file contents, prompts or model answers. To count changed lines and measure CPU and memory it runs two kinds of read-only local command: `git rev-parse` and `git diff --numstat`, and the operating system's process list (`ps`, or PowerShell on Windows). Nothing is written to disk or sent anywhere. See [SECURITY.md](SECURITY.md).
+The mod only observes. It never changes a prompt, a response, a tool call or a permission, never blocks a tool and never approves anything. It keeps only names, ids, counts, times, token figures and the paths of files tools read or edited, in the session's memory: never other tool arguments, file contents, prompts or model answers. To count changed lines and measure CPU and memory it runs two kinds of read-only local command: `git rev-parse` and `git diff --numstat`, and the operating system's process list (`ps`, or PowerShell on Windows). Nothing is written to disk, and nothing is sent anywhere except the speed test the agent can call, which only moves test data to and from `speed.cloudflare.com`. See [SECURITY.md](SECURITY.md).
 
 ## Development
 

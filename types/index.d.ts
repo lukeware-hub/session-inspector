@@ -136,6 +136,11 @@ export type SystemRecord = {
 export type InspectorTab = 'overview' | 'context' | 'sessions' | 'activity' | 'tools' | 'agents' | 'files' | 'system'
 
 declare module 'claude-code' {
+  // The speed test tool the mod registers for the agent; it takes no input.
+  interface McpToolInputs {
+    'mcp__session-inspector__speed_test': {}
+  }
+
   interface PluginState {
     'session-inspector': {
       session: Shaped<SessionRecord>
