@@ -14,6 +14,7 @@ import type {
   SystemRecord,
   ToolMetrics,
   UsageRecord,
+  WifiRecord,
 } from '../../types'
 
 export type {
@@ -39,6 +40,7 @@ export type {
   SystemRecord,
   ToolMetrics,
   UsageRecord,
+  WifiRecord,
 } from '../../types'
 
 // Everything the inspector shows, read in one snapshot.
@@ -54,6 +56,7 @@ export type InspectorState = {
   git: GitRecord
   speed: SpeedRecord
   system: SystemRecord
+  wifi: WifiRecord
   pressure: PressureRecord
   results: ResultRecord[]
   loop: LoopRecord
@@ -84,6 +87,7 @@ export const EMPTY_USAGE: UsageRecord = { rateLimits: [] }
 export const EMPTY_GIT: GitRecord = { isRepo: false, added: 0, removed: 0, files: 0 }
 export const EMPTY_SPEED: SpeedRecord = { history: [] }
 export const EMPTY_SYSTEM: SystemRecord = { cpuHistory: [] }
+export const EMPTY_WIFI: WifiRecord = {}
 export const EMPTY_PRESSURE: PressureRecord = { turnTokens: [] }
 export const EMPTY_LOOP: LoopRecord = { recent: [], alerts: [] }
 

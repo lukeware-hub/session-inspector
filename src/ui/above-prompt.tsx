@@ -1,8 +1,8 @@
 import type { On } from 'claude-code'
 
-import { formatBytes, formatDuration, formatTokens, formatUsd, limitLabel } from '../domain/formatters'
+import { formatBytes, formatDuration, formatRate, formatTokens, formatUsd, limitLabel } from '../domain/formatters'
 import { activeLoopAlert } from '../domain/insights'
-import type { InspectorState } from '../domain/models'
+import type { InspectorState, WifiRecord } from '../domain/models'
 import { activeAgents, sessionDurationMs } from '../domain/reducers'
 import { contextLevel, levelLabel } from '../domain/thresholds'
 import { readState } from '../state/repository'
@@ -67,8 +67,15 @@ function sessionRow(state: InspectorState, now: number): GridRow {
   }
 }
 
-function systemRow({ system, speed }: InspectorState): GridRow {
-  if (system.cpuPercent === undefined && system.memoryBytes === undefined && speed.tokensPerSecond === undefined) {
+// The computer's Wi-Fi download and upload; "off" when no Wi-Fi adapter is up.
+export function wifiSegment(wifi: WifiRecord): Segment {
+  if (wifi.hasAdapter === false) return { label: 'wifi', text: 'off', dim: true }
+  if (wifi.downBytesPerSecond === undefined || wifi.upBytesPerSecond === undefined) return missing('wifi')
+  return { label: 'wifi', text: `↓ ${formatRate(wifi.downBytesPerSecond)}`, more: [{ text: ` ↑ ${formatRate(wifi.upBytesPerSecond)}` }] }
+}
+
+function systemRow({ system, speed, wifi }: InspectorState): GridRow {
+  if (system.cpuPercent === undefined && system.memoryBytes === undefined && speed.tokensPerSecond === undefined && wifi.sampledAt === undefined) {
     return { label: 'System', cells: [], span: { text: 'measuring after the first turn', dim: true } }
   }
   return {
@@ -77,6 +84,7 @@ function systemRow({ system, speed }: InspectorState): GridRow {
       system.cpuPercent === undefined ? missing('CPU') : { label: 'CPU', text: meterText(system.cpuPercent), color: loadColor(system.cpuPercent) },
       system.memoryBytes === undefined ? missing('RAM') : { label: 'RAM', text: formatBytes(system.memoryBytes) },
       speed.tokensPerSecond === undefined ? missing('speed') : { label: 'speed', text: `${speed.tokensPerSecond} tok/s` },
+      wifiSegment(wifi),
     ],
   }
 }

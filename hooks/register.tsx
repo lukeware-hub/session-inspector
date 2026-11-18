@@ -2,7 +2,7 @@ import type { Register } from 'claude-code'
 
 import { registerAgentsCollector } from '../src/collectors/agents.collector'
 import { recordContext, registerContextCollector } from '../src/collectors/context.collector'
-import { inBackground, sampleSystem } from '../src/collectors/host.collector'
+import { inBackground, sampleSystem, startWifiSampler } from '../src/collectors/host.collector'
 import { registerSessionCollector, syncSession } from '../src/collectors/session.collector'
 import { registerSpeedCollector } from '../src/collectors/speed.collector'
 import { registerToolsCollector } from '../src/collectors/tools.collector'
@@ -19,6 +19,7 @@ export const register: Register = on => {
     await syncSession($)
     await recordContext($, (await $.session.usage()).context)
     inBackground(sampleSystem($))
+    startWifiSampler($)
     return next(e)
   }).catch(($, e, next) => next(e))
 

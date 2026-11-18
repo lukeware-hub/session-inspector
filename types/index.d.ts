@@ -133,6 +133,16 @@ export type SystemRecord = {
   cpuHistory: number[]
 }
 
+// The computer's Wi-Fi traffic; `hasAdapter` is false when no Wi-Fi adapter is up.
+export type WifiRecord = {
+  hasAdapter?: boolean
+  receivedBytes?: number
+  sentBytes?: number
+  sampledAt?: number
+  downBytesPerSecond?: number
+  upBytesPerSecond?: number
+}
+
 export type InspectorTab = 'overview' | 'context' | 'sessions' | 'activity' | 'tools' | 'agents' | 'files' | 'system'
 
 declare module 'claude-code' {
@@ -149,6 +159,7 @@ declare module 'claude-code' {
       git: Shaped<GitRecord>
       speed: Shaped<SpeedRecord>
       system: Shaped<SystemRecord>
+      wifi: Shaped<WifiRecord>
       pressure: Shaped<PressureRecord>
       results: Shaped<ResultRecord[]>
       loop: Shaped<LoopRecord>
