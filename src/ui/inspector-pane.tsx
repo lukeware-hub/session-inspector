@@ -284,7 +284,7 @@ function system({ ui, state, columns }: View) {
       {field(ui, 'Upload', wifi.hasAdapter === false ? 'off' : formatRate(wifi.upBytesPerSecond), columns)}
       {field(ui, 'Sampled at', formatClock(wifi.sampledAt), columns)}
       <Text dimColor>{fit('CPU and memory cover Claude Code and the tools it started, sampled at most every 10 seconds.', columns)}</Text>
-      <Text dimColor>{fit("Wi-Fi covers the whole computer's traffic, sampled every 2 seconds.", columns)}</Text>
+      <Text dimColor>{fit("Wi-Fi covers the whole computer's traffic, sampled every 5 seconds.", columns)}</Text>
     </Box>
   )
 }
