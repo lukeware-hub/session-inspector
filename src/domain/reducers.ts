@@ -51,7 +51,7 @@ export function addContextReading(readings: readonly ContextReading[], reading: 
 
 export function recordTool(tools: readonly ToolMetrics[], name: string, at: number): ToolMetrics[] {
   const found = tools.some(tool => tool.name === name)
-  if (!found) return [...tools, { name, executions: 1, errors: 0, denials: 0, totalMs: 0, maxMs: 0, lastExecution: at }]
+  if (!found) return [...tools, { name, executions: 1, errors: 0, denials: 0, totalMs: 0, maxMs: 0, resultTokens: 0, lastExecution: at }]
   return tools.map(tool =>
     tool.name === name ? { ...tool, executions: tool.executions + 1, lastExecution: at } : tool,
   )
@@ -73,6 +73,11 @@ export function finishTool(tools: readonly ToolMetrics[], name: string, duration
         }
       : tool,
   )
+}
+
+// Adds the estimated size of a result the model read to a tool already seen.
+export function addResultTokens(tools: readonly ToolMetrics[], name: string, tokens: number): ToolMetrics[] {
+  return tools.map(tool => (tool.name === name ? { ...tool, resultTokens: tool.resultTokens + tokens } : tool))
 }
 
 // Tools by average duration, slowest first.

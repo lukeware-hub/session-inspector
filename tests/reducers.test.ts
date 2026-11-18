@@ -83,8 +83,8 @@ describe('tool metrics', () => {
     tools = recordTool(tools, 'Read', 2)
     tools = recordTool(tools, 'Bash', 3)
     expect(tools).toEqual([
-      { name: 'Bash', executions: 2, errors: 0, denials: 0, totalMs: 0, maxMs: 0, lastExecution: 3 },
-      { name: 'Read', executions: 1, errors: 0, denials: 0, totalMs: 0, maxMs: 0, lastExecution: 2 },
+      { name: 'Bash', executions: 2, errors: 0, denials: 0, totalMs: 0, maxMs: 0, resultTokens: 0, lastExecution: 3 },
+      { name: 'Read', executions: 1, errors: 0, denials: 0, totalMs: 0, maxMs: 0, resultTokens: 0, lastExecution: 2 },
     ])
   })
 
@@ -93,7 +93,7 @@ describe('tool metrics', () => {
     tools = finishTool(tools, 'Bash', 300, 'ok')
     tools = finishTool(tools, 'Bash', 100, 'error')
     tools = finishTool(tools, 'Bash', Number.NaN, 'denied')
-    expect(tools[0]).toEqual({ name: 'Bash', executions: 2, errors: 1, denials: 1, totalMs: 400, maxMs: 300, lastExecution: 2 })
+    expect(tools[0]).toEqual({ name: 'Bash', executions: 2, errors: 1, denials: 1, totalMs: 400, maxMs: 300, resultTokens: 0, lastExecution: 2 })
     expect(finishTool([], 'Ghost', 5, 'error')).toEqual([])
   })
 

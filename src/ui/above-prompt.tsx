@@ -2,33 +2,38 @@ import type { On } from 'claude-code'
 
 import { formatBytes, formatDuration, formatPercent, formatTokens, formatUsd, limitLabel } from '../domain/formatters'
 import type { InspectorState } from '../domain/models'
+import { activeLoopAlert } from '../domain/insights'
 import { sessionDurationMs } from '../domain/reducers'
 import { contextLevel, levelLabel } from '../domain/thresholds'
 import { readState } from '../state/repository'
-import { LEVEL_COLOR, STATUS_MARK, labelledRow, loadColor, meter, type Segment, type Ui } from './components'
+import { LEVEL_COLOR, STATUS_MARK, forecastSegment, labelledRow, loadColor, meter, type Segment, type Ui } from './components'
 
 export const BAND_LABEL_WIDTH = 9
 
 export type BandRow = { label: string; segments: Segment[] }
 
-function contextRow({ contextReadings }: InspectorState): BandRow {
-  const reading = contextReadings.at(-1)
+function contextRow(state: InspectorState): BandRow {
+  const reading = state.contextReadings.at(-1)
   if (!reading) return { label: 'Context', segments: [{ text: 'waiting for the first response', dim: true }] }
   const level = contextLevel(reading.percent)
   const color = LEVEL_COLOR[level]
+  const forecast = forecastSegment(state)
   return {
     label: 'Context',
     segments: [
       { text: `${meter(reading.percent)} ${formatPercent(reading.percent)}`, color },
       { text: `${formatTokens(reading.tokens)} / ${formatTokens(reading.window)}` },
       { text: levelLabel(level), color, bold: level === 'high' || level === 'critical', dim: level === 'normal' },
+      ...(forecast ? [forecast] : []),
     ],
   }
 }
 
 function sessionRow(state: InspectorState, now: number): BandRow {
   const { stats, agents, usage, git } = state
+  const loop = activeLoopAlert(state.loop, now)
   const segments: Segment[] = [
+    ...(loop ? [{ text: `Loop: ${loop}`, color: 'error' as const, bold: true }] : []),
     { text: formatDuration(sessionDurationMs(state.session, now)) },
     { text: `${stats.totalTurns} turns` },
     { text: `${stats.totalToolCalls} tools` },

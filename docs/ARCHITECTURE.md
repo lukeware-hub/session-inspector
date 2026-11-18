@@ -32,16 +32,18 @@ Claude Code event ──> collector hook ──> domain function ──> reposit
 | `turn.step` | speed | Output tokens per second of each model request. |
 | `session.compact` | speed | A compaction that took place, with its trigger. |
 | `session.end` | session | The end of the session and its reason. |
-| `tool.call` | tools | The tool's name, its count, the calling agent, the file path for file tools, and after it ran its duration and whether it failed or was denied. |
+| `tool.call` | tools | The tool's name, its count, the calling agent, the file path for file tools, and after it ran its duration and whether it failed or was denied, then the size of its result and a fingerprint of the call for the loop detector. |
 | `agent.spawn` | agents | The agent the engine started, with the id, type and model it reports. |
 
 Every hook returns what `next(e)` returns and is registered with `.catch(($, e, next) => next(e))`, so a failure inside the mod leaves the event to the rest of the chain.
+
+The insights collector (`src/collectors/insights.collector.ts`) adds what helps a developer act: the context size at the end of each main turn and the auto-compaction threshold (from a local `/context` estimate), the largest tool results, and the loop detector. Its rules are pure functions in `src/domain/insights.ts`.
 
 The host collector (`src/collectors/host.collector.ts`) runs read-only local commands through `$.process.run`: `git` for line counts and the process list for CPU and memory (see [SECURITY.md](../SECURITY.md)). It runs beside the event, never awaited by it, and its failures are dropped. The parsing is pure and lives in `src/domain/host.ts`.
 
 ## State
 
-The state lives in Claude Code's session state (`$.state`), declared in the contract `types/index.d.ts`. It is split into twelve values: `session`, `context`, `activity`, `stats`, `tools`, `agents`, `usage`, `files`, `git`, `speed`, `system` and `tab`.
+The state lives in Claude Code's session state (`$.state`), declared in the contract `types/index.d.ts`. It is split into fifteen values (`pressure`, `results` and `loop` hold the insights): `session`, `context`, `activity`, `stats`, `tools`, `agents`, `usage`, `files`, `git`, `speed`, `system` and `tab`.
 
 - Each value is an atom from the state library (`atom`, `read`, `update` from `claude-code`). `update` reads, applies a pure function and writes with a version check, retrying on a conflict, so two events never overwrite each other.
 - Every value except `tab` carries a `shape` tag. A value stored under another tag, by an older version of the mod, is read as empty instead of breaking the new code.

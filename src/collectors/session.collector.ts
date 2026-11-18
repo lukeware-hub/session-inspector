@@ -14,6 +14,7 @@ import {
   type Engine,
 } from '../state/repository'
 import { captureGitBase, inBackground, refreshGit, sampleSystem } from './host.collector'
+import { refreshPressure } from './insights.collector'
 
 // Binds the state to the live session id; a new id (after /clear) starts the values over.
 export async function syncSession($: Engine): Promise<void> {
@@ -62,6 +63,7 @@ export function registerSessionCollector(on: On): void {
       await logEvent($, { type: 'turn.complete', label, timestamp: at })
       inBackground(sampleSystem($))
       inBackground(refreshGit($))
+      inBackground(refreshPressure($))
     } else {
       const status = agentStatusFromReason(e.reason)
       await changeAgents($, agents => finishAgent(agents, agentId, { status, at, durationMs: e.durationMs }))

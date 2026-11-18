@@ -4,6 +4,8 @@ import type { EngineInterface } from 'claude-code'
 import {
   EMPTY_ACTIVITY,
   EMPTY_GIT,
+  EMPTY_LOOP,
+  EMPTY_PRESSURE,
   EMPTY_SESSION,
   EMPTY_SPEED,
   EMPTY_STATS,
@@ -13,6 +15,9 @@ import {
   type ContextReading,
   type FileRecord,
   type GitRecord,
+  type LoopRecord,
+  type PressureRecord,
+  type ResultRecord,
   type InspectorState,
   type InspectorTab,
   type SessionMetrics,
@@ -33,17 +38,20 @@ const sessionState = atom({ plugin: 'session-inspector', key: 'session' } as con
 const contextState = atom({ plugin: 'session-inspector', key: 'context' } as const, [], { shape: 'context-1' })
 const activityState = atom({ plugin: 'session-inspector', key: 'activity' } as const, EMPTY_ACTIVITY, { shape: 'activity-1' })
 const statsState = atom({ plugin: 'session-inspector', key: 'stats' } as const, EMPTY_STATS, { shape: 'stats-2' })
-const toolsState = atom({ plugin: 'session-inspector', key: 'tools' } as const, [], { shape: 'tools-2' })
+const toolsState = atom({ plugin: 'session-inspector', key: 'tools' } as const, [], { shape: 'tools-3' })
 const agentsState = atom({ plugin: 'session-inspector', key: 'agents' } as const, [], { shape: 'agents-1' })
 const usageState = atom({ plugin: 'session-inspector', key: 'usage' } as const, EMPTY_USAGE, { shape: 'usage-1' })
 const filesState = atom({ plugin: 'session-inspector', key: 'files' } as const, [], { shape: 'files-1' })
 const gitState = atom({ plugin: 'session-inspector', key: 'git' } as const, EMPTY_GIT, { shape: 'git-1' })
 const speedState = atom({ plugin: 'session-inspector', key: 'speed' } as const, EMPTY_SPEED, { shape: 'speed-1' })
 const systemState = atom({ plugin: 'session-inspector', key: 'system' } as const, EMPTY_SYSTEM, { shape: 'system-1' })
+const pressureState = atom({ plugin: 'session-inspector', key: 'pressure' } as const, EMPTY_PRESSURE, { shape: 'pressure-1' })
+const resultsState = atom({ plugin: 'session-inspector', key: 'results' } as const, [], { shape: 'results-1' })
+const loopState = atom({ plugin: 'session-inspector', key: 'loop' } as const, EMPTY_LOOP, { shape: 'loop-1' })
 const tabState = atom({ plugin: 'session-inspector', key: 'tab' } as const, 'overview' as InspectorTab)
 
 export async function readState($: Engine): Promise<InspectorState> {
-  const [session, contextReadings, activity, stats, tools, agents, usage, files, git, speed, system, tab] = await Promise.all([
+  const [session, contextReadings, activity, stats, tools, agents, usage, files, git, speed, system, pressure, results, loop, tab] = await Promise.all([
     read($, sessionState),
     read($, contextState),
     read($, activityState),
@@ -55,9 +63,12 @@ export async function readState($: Engine): Promise<InspectorState> {
     read($, gitState),
     read($, speedState),
     read($, systemState),
+    read($, pressureState),
+    read($, resultsState),
+    read($, loopState),
     read($, tabState),
   ])
-  return { session, contextReadings, activity, stats, tools, agents, usage, files, git, speed, system, tab }
+  return { session, contextReadings, activity, stats, tools, agents, usage, files, git, speed, system, pressure, results, loop, tab }
 }
 
 export function readSession($: Engine): Promise<SessionRecord> {
@@ -116,6 +127,18 @@ export function changeSystem($: Engine, change: Change<SystemRecord>): Promise<S
   return update($, systemState, change)
 }
 
+export function changePressure($: Engine, change: Change<PressureRecord>): Promise<PressureRecord> {
+  return update($, pressureState, change)
+}
+
+export function changeResults($: Engine, change: Change<ResultRecord[]>): Promise<ResultRecord[]> {
+  return update($, resultsState, change)
+}
+
+export function changeLoop($: Engine, change: Change<LoopRecord>): Promise<LoopRecord> {
+  return update($, loopState, change)
+}
+
 export function setTab($: Engine, tab: InspectorTab): Promise<InspectorTab> {
   return update($, tabState, () => tab)
 }
@@ -138,6 +161,9 @@ export async function resetState($: Engine): Promise<void> {
     update($, gitState, () => EMPTY_GIT),
     update($, speedState, () => EMPTY_SPEED),
     update($, systemState, () => EMPTY_SYSTEM),
+    update($, pressureState, () => EMPTY_PRESSURE),
+    update($, resultsState, () => []),
+    update($, loopState, () => EMPTY_LOOP),
   ])
 }
 

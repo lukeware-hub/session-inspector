@@ -20,14 +20,16 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
   When the band has less than five rows of room it drops the frame and keeps the rows.
 - **Inspector pane**: opened with `/inspector`, with eight sections you switch with the buttons or the keys 1 to 8:
   - **Overview**: status, model, context usage and window, tokens used, turns, tool calls, subagents, cost, lines changed, speed, CPU and memory, duration, last activity and event count.
-  - **Context**: tokens in context, window size, tokens available, level, compactions, what fills the window (system prompt, tools, memory, messages), and the last 12 readings.
+  - **Context**: tokens in context, window size, tokens available, level, where auto-compaction runs, growth per turn and turns left, compactions, what fills the window (system prompt, tools, memory, messages), what loads on every turn (memory files, MCP servers, skills, agents), the largest tool results, and the last 12 readings.
   - **Session**: session id, status, start and end time, duration, turns, tool calls, model, token totals, cost and rate limits.
   - **Activity**: the last 50 events (session start and end, turns, tool calls, failures, denials, subagents, alerts, compactions).
-  - **Tools**: every tool that actually ran, with runs, failures, permission denials, share of all calls, average time and last use; the slowest tools; MCP calls grouped by server.
+  - **Tools**: every tool that actually ran, with runs, failures, permission denials, share of all calls, average time, the size of its results and last use; the slowest tools; MCP calls grouped by server.
   - **Agents**: every subagent the session started, with type, status, task, turns, tool calls, duration, model and tools used.
   - **Files**: lines added and removed since the session began, and the files tools read or edited.
   - **System**: CPU and memory of the Claude Code process tree, and model speed in tokens per second.
 - **Context alerts**: a notification when context usage rises into High (85% or more) or Critical (95% or more).
+- **Context forecast**: the band says how many turns are left before auto-compaction (or a full window) at the pace of the last turns, in amber from three turns and in red on the last one.
+- **Loop detector**: a notification, and a red line in the band, when the same call repeats four times within three minutes or three calls fail in a row, so a stuck agent is caught before it burns tokens.
 
 Context levels: Normal from 0% to 69%, Attention from 70% to 84%, High from 85% to 94%, Critical from 95% to 100%.
 

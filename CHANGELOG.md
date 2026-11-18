@@ -2,6 +2,14 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Context forecast: turns left before auto-compaction or a full window, in the band and the Context section.
+- What loads on every turn (memory files, MCP servers, skills, agents) and the largest tool results, in the Context section; result size per tool in the Tools section.
+- Loop detector: an alert when the same call repeats four times within three minutes or three calls fail in a row.
+
 ## [0.1.0] - 2026-11-18
 
 ### Added

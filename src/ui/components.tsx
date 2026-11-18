@@ -1,7 +1,8 @@
 import type { Elements, ThemeKey } from 'claude-code'
 
 import { fit } from '../domain/formatters'
-import type { ContextLevel, SessionStatus } from '../domain/models'
+import { compactionLimit, forecastTurns } from '../domain/insights'
+import type { ContextLevel, InspectorState, SessionStatus } from '../domain/models'
 
 // The elements every surface draws that the inspector uses.
 export type Ui = Pick<Elements[keyof Elements], 'Box' | 'Text' | 'Button' | 'Progress'>
@@ -24,6 +25,18 @@ export const STATUS_MARK: Record<SessionStatus, { glyph: string; color?: ThemeKe
   running: { glyph: '●', color: 'success' },
   idle: { glyph: '○' },
   ended: { glyph: '■' },
+}
+
+// How many turns the context has left at its recent pace, worded and colored; undefined until it can be told.
+export function forecastSegment(state: InspectorState): Segment | undefined {
+  const reading = state.contextReadings.at(-1)
+  if (!reading) return undefined
+  const isCompaction = Boolean(state.pressure.isAutoCompact && state.pressure.threshold)
+  const { turnsLeft } = forecastTurns(state.pressure.turnTokens, reading.tokens, compactionLimit(state.pressure, reading.window))
+  if (turnsLeft === undefined) return undefined
+  const target = isCompaction ? 'compaction' : 'a full window'
+  const text = turnsLeft <= 1 ? `${target} next turn` : `≈${turnsLeft} turns to ${target}`
+  return { text, color: turnsLeft <= 1 ? 'error' : turnsLeft <= 3 ? 'warning' : undefined, dim: turnsLeft > 3 }
 }
 
 // Ten cells of ▰ and ▱, filled to the percent.

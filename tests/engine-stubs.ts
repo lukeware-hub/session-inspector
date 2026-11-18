@@ -1,4 +1,4 @@
-import type { On } from 'claude-code'
+import type { On, SessionContextBreakdown } from 'claude-code'
 import { mock } from 'claude-code/testing'
 
 export const SESSION_ID = 'session-test-1'
@@ -14,6 +14,10 @@ export type Session = {
   toolFails?: boolean
   // Host command output by executable name; a command not listed fails.
   host?: Record<string, string | ((argv: readonly string[]) => string)>
+  // The text each tool's result hands the model, by tool name.
+  toolText?: Record<string, string>
+  // The /context breakdown the session reports; read at each call so a test can change it.
+  breakdown?: Partial<SessionContextBreakdown>
 }
 
 // Stands for the engine beneath the plugin: each hook answers as a session does.
@@ -37,7 +41,8 @@ export function stubEngine(on: On, session: Session = { id: SESSION_ID }) {
   on('session.usage', () => ({
     value: {
       startedAt: STARTED_AT,
-      context: { tokens: session.tokens, window: 200_000 },
+      // A partial breakdown stands for the engine's: the mod reads only the fields a test sets.
+      context: { tokens: session.tokens, window: 200_000, breakdown: session.breakdown as SessionContextBreakdown | undefined },
       rateLimits: [],
     },
   }))
@@ -58,7 +63,9 @@ export function stubEngine(on: On, session: Session = { id: SESSION_ID }) {
   on('session.measure', (_, e) => ({ changed: e.changed }))
   on('turn.start', (_, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_, e) => ({ text: e.answer }))
-  on('tool.call', () => (session.toolFails ? { result: {}, isError: true as const, text: 'failed' } : { result: {} }))
+  on('tool.call', (_, e) =>
+    session.toolFails ? { result: {}, isError: true as const, text: 'failed' } : { result: {}, text: session.toolText?.[String(e.tool)] },
+  )
   on('agent.spawn', () => ({ model: 'haiku', agentId: 'agent-1' }))
   return { clock, toasts, commands, panes, ran }
 }

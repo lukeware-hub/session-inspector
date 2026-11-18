@@ -11,6 +11,7 @@ import {
   type ToolOutcome,
 } from '../domain/reducers'
 import { changeAgents, changeFiles, changeStats, changeTools, logEvent, touchSession } from '../state/repository'
+import { recordCallInsights } from './insights.collector'
 
 const FILE_TOUCH: Record<string, FileTouch> = {
   Read: 'read',
@@ -37,10 +38,8 @@ export function registerToolsCollector(on: On): void {
     await changeStats($, countToolCall)
     if (agentId !== undefined) await changeAgents($, agents => agentToolCall(agents, agentId, name))
     const file = touchedFile(name, e)
-    if (file) {
-      const path = relativePath(file.path, await $.session.cwd())
-      await changeFiles($, files => recordFile(files, path, file.touch, at))
-    }
+    const path = file && relativePath(file.path, await $.session.cwd())
+    if (file && path) await changeFiles($, files => recordFile(files, path, file.touch, at))
     await touchSession($, at)
     await logEvent($, { type: 'tool.call', label: name, timestamp: at, toolName: name, agentId })
 
@@ -50,6 +49,7 @@ export function registerToolsCollector(on: On): void {
     await changeTools($, tools => finishTool(tools, name, end - at, outcome))
     if (outcome === 'denied') await logEvent($, { type: 'tool.denied', label: `${name} denied`, timestamp: end, toolName: name, agentId })
     if (outcome === 'error') await logEvent($, { type: 'tool.error', label: `${name} failed`, timestamp: end, toolName: name, agentId })
+    await recordCallInsights($, { tool: name, input: e, file: path, resultText: ran.text, failed: outcome !== 'ok', agentId, at: end })
     return ran
   }).catch(($, e, next) => next(e))
 }

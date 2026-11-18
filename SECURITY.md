@@ -5,8 +5,8 @@
 Session Inspector only observes the Claude Code session it runs in.
 
 - It never changes a prompt, a model answer, a tool call, a command or a permission, never blocks a tool and never approves a permission. Every hook passes its event on unchanged, and a failure inside the mod is caught so the session goes on as if the mod were not there.
-- It keeps only tool names, agent ids and types, the first 60 characters of a subagent's short task description, counts, times, token figures, Claude Code's cost estimate and rate-limit figures, and the paths of the files tools read or edited.
-- It never keeps other tool arguments, file contents, prompts, model answers or credentials.
+- It keeps only tool names, agent ids and types, the first 60 characters of a subagent's short task description, counts, times, token figures, Claude Code's cost estimate and rate-limit figures, the paths of the files tools read or edited, an estimate of each tool result's size, and for the last 20 calls a short fingerprint of their arguments (a hash, used only to notice the same call repeating).
+- It never keeps other tool arguments, file contents, tool results, prompts, model answers or credentials. The fingerprint cannot be turned back into the arguments.
 - It keeps everything in Claude Code's session state, in memory. It writes nothing to disk and nothing outlives the session.
 - It makes no network request and reads no file.
 

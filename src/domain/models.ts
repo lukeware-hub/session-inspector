@@ -5,6 +5,9 @@ import type {
   FileRecord,
   GitRecord,
   InspectorTab,
+  LoopRecord,
+  PressureRecord,
+  ResultRecord,
   SessionMetrics,
   SessionRecord,
   SpeedRecord,
@@ -16,6 +19,7 @@ import type {
 export type {
   ActivityLog,
   AgentRecord,
+  CallSignature,
   ContextLevel,
   ContextReading,
   FileRecord,
@@ -23,7 +27,11 @@ export type {
   InspectorEvent,
   InspectorEventType,
   InspectorTab,
+  LoopAlert,
+  LoopRecord,
+  PressureRecord,
   RateLimitRecord,
+  ResultRecord,
   SessionMetrics,
   SessionRecord,
   SessionStatus,
@@ -46,6 +54,9 @@ export type InspectorState = {
   git: GitRecord
   speed: SpeedRecord
   system: SystemRecord
+  pressure: PressureRecord
+  results: ResultRecord[]
+  loop: LoopRecord
   tab: InspectorTab
 }
 
@@ -73,6 +84,8 @@ export const EMPTY_USAGE: UsageRecord = { rateLimits: [] }
 export const EMPTY_GIT: GitRecord = { isRepo: false, added: 0, removed: 0, files: 0 }
 export const EMPTY_SPEED: SpeedRecord = { history: [] }
 export const EMPTY_SYSTEM: SystemRecord = { cpuHistory: [] }
+export const EMPTY_PRESSURE: PressureRecord = { turnTokens: [] }
+export const EMPTY_LOOP: LoopRecord = { recent: [], alerts: [] }
 
 export const TABS: readonly InspectorTab[] = [
   'overview',

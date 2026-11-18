@@ -1,4 +1,4 @@
-import type { On } from 'claude-code'
+import type { On, SessionContextBreakdown } from 'claude-code'
 
 import {
   fit,
@@ -11,12 +11,13 @@ import {
   limitLabel,
   sparkline,
 } from '../domain/formatters'
+import { activeLoopAlert, compactionLimit, forecastTurns } from '../domain/insights'
 import { TABS, type InspectorState, type InspectorTab } from '../domain/models'
 import { mcpGroups, mcpServer, sessionDurationMs, slowestTools, toolDistribution, totalTokens } from '../domain/reducers'
 import { contextLevel, levelLabel } from '../domain/thresholds'
 import { PANE_ID } from '../state/keys'
 import { readState, setTab, type Engine } from '../state/repository'
-import { LEVEL_COLOR, STATUS_MARK, empty, field, heading, loadColor, meter, type Ui } from './components'
+import { LEVEL_COLOR, STATUS_MARK, empty, field, forecastSegment, heading, loadColor, meter, type Ui } from './components'
 
 const TAB_LABEL: Record<InspectorTab, string> = {
   overview: 'Overview',
@@ -29,7 +30,10 @@ const TAB_LABEL: Record<InspectorTab, string> = {
   system: 'System',
 }
 
-export type ContextCategoryView = { name: string; tokens: number }
+export type TokenShare = { name: string; tokens: number }
+
+// What /context reports about the window: its categories, and the fixed items that load every turn.
+export type BreakdownView = { categories: TokenShare[]; fixed: TokenShare[] }
 
 type View = {
   ui: Ui
@@ -37,7 +41,14 @@ type View = {
   now: number
   columns: number
   rows: number
-  categories?: ContextCategoryView[]
+  breakdown?: BreakdownView
+}
+
+const FIXED_COSTS = 6
+
+function shareRow(ui: Ui, share: TokenShare, window: number, columns: number) {
+  const { Text } = ui
+  return <Text>{fit(`${fit(share.name, 28).padEnd(28)}  ${meter((share.tokens / window) * 100)}  ${formatTokens(share.tokens).padStart(6)}`, columns)}</Text>
 }
 
 function overview({ ui, state, now, columns }: View) {
@@ -47,12 +58,16 @@ function overview({ ui, state, now, columns }: View) {
   const level = reading && contextLevel(reading.percent)
   const running = agents.filter(agent => agent.status === 'running').length
   const mark = STATUS_MARK[session.status]
+  const forecast = forecastSegment(state)
+  const loop = activeLoopAlert(state.loop, now)
   return (
     <Box flexDirection="column">
       {field(ui, 'Session status', `${mark.glyph} ${session.status}`, columns, mark.color)}
       {field(ui, 'Current model', session.model ?? '—', columns)}
       {field(ui, 'Context usage', reading && level ? `${meter(reading.percent)} ${formatPercent(reading.percent)}  ${levelLabel(level)}` : '—', columns, level && LEVEL_COLOR[level])}
       {field(ui, 'Context window', formatTokens(reading?.window), columns)}
+      {field(ui, 'Turns left', forecast?.text ?? '—', columns, forecast?.color)}
+      {field(ui, 'Loop alert', loop ?? 'none', columns, loop ? 'error' : undefined)}
       {field(ui, 'Tokens used', `${formatTokens(totalTokens(stats))} in this session`, columns)}
       {field(ui, 'Turns', String(stats.totalTurns), columns)}
       {field(ui, 'Tool calls', String(stats.totalToolCalls), columns)}
@@ -68,13 +83,17 @@ function overview({ ui, state, now, columns }: View) {
   )
 }
 
-function context({ ui, state, columns, categories }: View) {
+function context({ ui, state, columns, breakdown }: View) {
   const { Box, Progress, Text } = ui
   const readings = state.contextReadings
   const reading = readings.at(-1)
   if (!reading) return empty(ui, 'No reading yet. The first model response reports how full the context window is.')
   const level = contextLevel(reading.percent)
   const { compactions, lastCompaction } = state.stats
+  const { pressure, results } = state
+  const limit = compactionLimit(pressure, reading.window)
+  const forecast = forecastTurns(pressure.turnTokens, reading.tokens, limit)
+  const turnsLeft = forecastSegment(state)
   return (
     <Box flexDirection="column">
       <Progress label="Context window" value={reading.percent} max={100} valueText={formatPercent(reading.percent)} color={LEVEL_COLOR[level]} />
@@ -83,13 +102,16 @@ function context({ ui, state, columns, categories }: View) {
       {field(ui, 'Window size', formatTokens(reading.window), columns)}
       {field(ui, 'Tokens available', formatTokens(Math.max(0, reading.window - reading.tokens)), columns)}
       {field(ui, 'Compactions', compactions ? `${compactions}, last at ${formatClock(lastCompaction?.at)} (${lastCompaction?.trigger})` : 'none', columns)}
+      {field(ui, 'Compaction at', pressure.isAutoCompact && pressure.threshold ? formatTokens(pressure.threshold) : 'auto-compaction off: the window size', columns)}
+      {field(ui, 'Growth per turn', forecast.growthPerTurn === undefined ? 'known after two turns' : formatTokens(forecast.growthPerTurn), columns)}
+      {field(ui, 'Turns left', turnsLeft?.text ?? '—', columns, turnsLeft?.color)}
       <Text dimColor>{fit('Tokens in context count the last response only; the session total is on Overview.', columns)}</Text>
-      {categories && categories.length > 0 && heading(ui, 'What fills the window')}
-      {categories?.map(category => (
-        <Text>
-          {fit(`${fit(category.name, 22).padEnd(22)}  ${meter((category.tokens / reading.window) * 100)}  ${formatTokens(category.tokens).padStart(6)}`, columns)}
-        </Text>
-      ))}
+      {breakdown && breakdown.categories.length > 0 && heading(ui, 'What fills the window')}
+      {breakdown?.categories.map(share => shareRow(ui, share, reading.window, columns))}
+      {breakdown && breakdown.fixed.length > 0 && heading(ui, 'Loaded every turn')}
+      {breakdown?.fixed.map(share => shareRow(ui, share, reading.window, columns))}
+      {results.length > 0 && heading(ui, 'Largest tool results')}
+      {results.map(result => shareRow(ui, { name: result.target ? `${result.tool} ${result.target}` : result.tool, tokens: result.tokens }, reading.window, columns))}
       {heading(ui, 'Last readings')}
       <Text dimColor>{fit(`History ${sparkline(readings.map(one => one.percent))}`, columns)}</Text>
       {[...readings].reverse().map(one => (
@@ -141,6 +163,7 @@ const EVENT_COLOR: Partial<Record<string, 'error' | 'warning'>> = {
   'tool.denied': 'error',
   'context.alert': 'warning',
   'context.compact': 'warning',
+  'loop.alert': 'error',
 }
 
 function activity({ ui, state, columns, rows }: View) {
@@ -172,14 +195,14 @@ function tools({ ui, state, columns }: View) {
   const groups = mcpGroups(state.tools)
   return (
     <Box flexDirection="column" overflowX="scroll">
-      <Text dimColor>{fit(`${'Tool'.padEnd(width)}  Runs  Fail  Deny  Share             Avg     Last`, columns)}</Text>
+      <Text dimColor>{fit(`${'Tool'.padEnd(width)}  Runs  Fail  Deny  Share             Avg  Result     Last`, columns)}</Text>
       {list.map(share => {
         const tool = byName.get(share.name)
         const failed = (tool?.errors ?? 0) + (tool?.denials ?? 0) > 0
         return (
           <Text color={failed ? 'error' : undefined}>
             {fit(
-              `${fit(mcpServer(share.name) ? share.name.replace(/^mcp__/, '') : share.name, width).padEnd(width)}  ${String(share.executions).padStart(4)}  ${String(tool?.errors ?? 0).padStart(4)}  ${String(tool?.denials ?? 0).padStart(4)}  ${meter(share.share * 100)} ${String(Math.round(share.share * 100)).padStart(3)}%  ${formatDuration(tool && tool.totalMs > 0 ? tool.totalMs / tool.executions : undefined).padStart(6)}  ${formatClock(tool?.lastExecution)}`,
+              `${fit(mcpServer(share.name) ? share.name.replace(/^mcp__/, '') : share.name, width).padEnd(width)}  ${String(share.executions).padStart(4)}  ${String(tool?.errors ?? 0).padStart(4)}  ${String(tool?.denials ?? 0).padStart(4)}  ${meter(share.share * 100)} ${String(Math.round(share.share * 100)).padStart(3)}%  ${formatDuration(tool && tool.totalMs > 0 ? tool.totalMs / tool.executions : undefined).padStart(6)}  ${formatTokens(tool?.resultTokens).padStart(6)}  ${formatClock(tool?.lastExecution)}`,
               columns,
             )}
           </Text>
@@ -289,13 +312,30 @@ function tabBar($: Engine, ui: Ui, active: InspectorTab) {
   )
 }
 
-// The categories that fill the window, estimated locally; none when the engine cannot say.
-async function contextCategories($: Engine): Promise<ContextCategoryView[] | undefined> {
+// The items loaded on every turn, largest first: memory files, MCP servers' tool schemas, the skill listing, agent types.
+export function fixedCosts(breakdown: SessionContextBreakdown): TokenShare[] {
+  const servers = new Map<string, number>()
+  for (const tool of breakdown.mcpTools) servers.set(tool.serverName, (servers.get(tool.serverName) ?? 0) + tool.tokens)
+  return [
+    ...breakdown.memoryFiles.map(file => ({ name: `Memory ${file.path.replace(/\\/g, '/').split('/').slice(-2).join('/')}`, tokens: file.tokens })),
+    ...[...servers].map(([server, tokens]) => ({ name: `MCP ${server}`, tokens })),
+    ...(breakdown.skills ? [{ name: 'Skill listing', tokens: breakdown.skills.tokens }] : []),
+    ...breakdown.agents.map(agent => ({ name: `Agent ${agent.agentType}`, tokens: agent.tokens })),
+  ]
+    .filter(share => share.tokens > 0)
+    .sort((a, b) => b.tokens - a.tokens)
+    .slice(0, FIXED_COSTS)
+}
+
+// What fills the window, estimated locally with no request; undefined when the engine cannot say.
+async function contextBreakdown($: Engine): Promise<BreakdownView | undefined> {
   try {
-    const usage = await $.session.usage({ breakdown: 'summary' })
-    return usage.context.breakdown?.categories
+    const breakdown = (await $.session.usage({ breakdown: 'summary' })).context.breakdown
+    if (!breakdown) return undefined
+    const categories = breakdown.categories
       .filter(category => category.kind === 'used' && category.tokens > 0)
       .map(category => ({ name: category.name, tokens: category.tokens }))
+    return { categories, fixed: fixedCosts(breakdown) }
   } catch {
     return undefined
   }
@@ -305,14 +345,14 @@ export function registerInspectorPane(on: On): void {
   on('ui.render', { component: 'Pane', requestId: PANE_ID }, async ($, e) => {
     const ui: Ui = $.ui.resolve(e)
     const [state, now] = await Promise.all([readState($), $.clock.now()])
-    const categories = state.tab === 'context' ? await contextCategories($) : undefined
+    const breakdown = state.tab === 'context' ? await contextBreakdown($) : undefined
     const columns = e.props.bodyColumns
     const rows = Math.max(3, (e.props.scroll.bodyRows ?? 20) - 3)
     const { Box } = ui
     return (
       <Box flexDirection="column">
         {tabBar($, ui, state.tab)}
-        {SECTIONS[state.tab]({ ui, state, now, columns, rows, categories })}
+        {SECTIONS[state.tab]({ ui, state, now, columns, rows, breakdown })}
       </Box>
     )
   })

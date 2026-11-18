@@ -45,6 +45,7 @@ export type InspectorEventType =
   | 'context.alert'
   | 'context.compact'
   | 'tool.denied'
+  | 'loop.alert'
 
 export type InspectorEvent = {
   sequence: number
@@ -64,8 +65,25 @@ export type ToolMetrics = {
   denials: number
   totalMs: number
   maxMs: number
+  resultTokens: number
   lastExecution: number
 }
+
+// How fast the context grows, and where auto-compaction runs.
+export type PressureRecord = {
+  threshold?: number
+  isAutoCompact?: boolean
+  turnTokens: number[]
+}
+
+// One large tool result: which tool, on what file, and its estimated size.
+export type ResultRecord = { tool: string; target?: string; tokens: number; at: number }
+
+export type CallSignature = { signature: string; label: string; at: number; failed: boolean }
+
+export type LoopAlert = { at: number; label: string }
+
+export type LoopRecord = { recent: CallSignature[]; alerts: LoopAlert[] }
 
 export type AgentRecord = {
   id: string
@@ -130,6 +148,9 @@ declare module 'claude-code' {
       git: Shaped<GitRecord>
       speed: Shaped<SpeedRecord>
       system: Shaped<SystemRecord>
+      pressure: Shaped<PressureRecord>
+      results: Shaped<ResultRecord[]>
+      loop: Shaped<LoopRecord>
       tab: InspectorTab
     }
   }
