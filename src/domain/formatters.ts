@@ -64,11 +64,10 @@ export function formatBytes(bytes: number | undefined): string {
   return mb < 1024 ? `${Math.round(mb)} MB` : `${trim(mb / 1024)} GB`
 }
 
-// Bytes per second in MB/s (1 MB = 1024 × 1024 bytes): 2516582 -> "2.4 MB/s", 157286400 -> "150 MB/s".
+// Bytes per second in kilobits per second (1 Kbps = 1000 bits/s): 21375 -> "171 Kbps".
 export function formatRate(bytesPerSecond: number | undefined): string {
   if (bytesPerSecond === undefined || !Number.isFinite(bytesPerSecond) || bytesPerSecond < 0) return '—'
-  const mb = bytesPerSecond / 1024 / 1024
-  return `${mb >= 100 ? Math.round(mb) : mb.toFixed(1)} MB/s`
+  return `${Math.round((bytesPerSecond * 8) / 1000)} Kbps`
 }
 
 // Dollars with cents, "$8.40"; an estimate the caller labels as such.

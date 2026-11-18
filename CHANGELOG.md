@@ -7,6 +7,7 @@ All notable changes to this project are written here. The project follows [Seman
 ### Changed
 
 - Wi-Fi traffic is read every 5 seconds instead of every 2.
+- Wi-Fi traffic is shown in Kbps (kilobits per second, 1 Kbps = 1000 bits/s) instead of MB/s, so small traffic no longer reads as zero.
 
 ## [0.3.0] - 2026-11-18
 
