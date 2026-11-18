@@ -13,7 +13,7 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
   │ Session Inspector                          claude-opus-5-5   effort high   ● running  │
   │ Context  used ████░░░░░░ 45%   tokens 454k / 1M   level Normal                        │
   │ Session  time 1h 14m   subagents 2 running of 5   turns 8   tools 82   cost $19.35      │
-  │ System   CPU █░░░░░░░░░ 5%   RAM 713 MB   speed 99 tok/s   wifi ↓ 2.4 MB/s ↑ 0.3 MB/s │
+  │ System   CPU █░░░░░░░░░ 5%   RAM 713 MB   speed 99 tok/s   wifi ↓ 171 Kbps ↑ 75 Kbps  │
   │ Limits   5h ██░░░░░░░░ 16%   7d ░░░░░░░░░░ 3%                                         │
   ╰───────────────────────────────────────────────────────────────────────────────────────╯
   ```
@@ -28,7 +28,7 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
   - **Agents**: every subagent the session started, with type, status, task, turns, tool calls, duration, model and tools used.
   - **Files**: lines added and removed since the session began, and the files tools read or edited.
   - **System**: CPU and memory of the Claude Code process tree, model speed in tokens per second, and the computer's Wi-Fi download and upload.
-- **Wi-Fi traffic**: the band's System row shows how many MB/s (1 MB = 1024 × 1024 bytes) the computer's Wi-Fi receives and sends, read every 5 seconds; it says `off` when no Wi-Fi adapter is up.
+- **Wi-Fi traffic**: the band's System row shows how many Kbps (kilobits per second, 1 Kbps = 1000 bits/s) the computer's Wi-Fi receives and sends, read every 5 seconds; it says `off` when no Wi-Fi adapter is up.
 - **Agent list colors**: each row of the agent list under the prompt gets a mark of its own color, filled while the agent works and hollow once it stops, so several subagents are told apart at a glance.
 - **Context alerts**: a notification when context usage rises into High (85% or more) or Critical (95% or more).
 - **Context forecast**: the band says how many turns are left before auto-compaction (or a full window) at the pace of the last turns, in amber from three turns and in red on the last one.

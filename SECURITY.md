@@ -19,7 +19,7 @@ The mod runs these read-only commands on your machine, with Claude Code's `$.pro
 | `git rev-parse HEAD` | Remembers the commit the session started on. | Once per session, in a git repository. |
 | `git diff --numstat <that commit>` | Counts lines added and removed since then. | After each turn and when `/inspector` opens. |
 | `powershell.exe ... Get-CimInstance Win32_Process` (Windows) or `ps -A -o pid=,ppid=,rss=,time=,comm=` (macOS, Linux) | Measures CPU and memory of the Claude Code process tree. | At most once every 10 seconds, at turn start and end and when `/inspector` opens. |
-| `powershell.exe ... NetworkInterface GetIPStatistics` (Windows and WSL), `cat /sys/class/net/<adapter>/statistics/rx_bytes` and `tx_bytes` (Linux), or `networksetup -listallhardwareports` and `netstat -ibn -I <adapter>` (macOS) | Reads the bytes the Wi-Fi adapter received and sent, to show its traffic in MB/s. | Every 5 seconds while the session is open. |
+| `powershell.exe ... NetworkInterface GetIPStatistics` (Windows and WSL), `cat /sys/class/net/<adapter>/statistics/rx_bytes` and `tx_bytes` (Linux), or `networksetup -listallhardwareports` and `netstat -ibn -I <adapter>` (macOS) | Reads the bytes the Wi-Fi adapter received and sent, to show its traffic in Kbps. | Every 5 seconds while the session is open. |
 
 Only figures are kept from their output: line counts, the memory and CPU time of the Claude Code processes, and the Wi-Fi byte counters. The rest of the process list is discarded at once.
 

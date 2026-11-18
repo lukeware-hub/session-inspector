@@ -38,18 +38,18 @@ describe('wifi rates', () => {
     expect(addWifiSample(before, undefined, 3000)).toEqual({ hasAdapter: false, sampledAt: 3000 })
   })
 
-  test('rates read in MB/s of 1024 × 1024 bytes', () => {
-    expect(formatRate(2.4 * MB)).toBe('2.4 MB/s')
-    expect(formatRate(0)).toBe('0.0 MB/s')
-    expect(formatRate(150 * MB)).toBe('150 MB/s')
+  test('rates read in kilobits per second, 1 Kbps = 1000 bits/s', () => {
+    expect(formatRate(21_375)).toBe('171 Kbps')
+    expect(formatRate(0)).toBe('0 Kbps')
+    expect(formatRate(12_500_000)).toBe('100000 Kbps')
     expect(formatRate(undefined)).toBe('—')
   })
 
   test('the band segment shows download and upload, off with no adapter, a dash before the second reading', () => {
-    expect(wifiSegment({ hasAdapter: true, downBytesPerSecond: 2.4 * MB, upBytesPerSecond: 0.3 * MB })).toEqual({
+    expect(wifiSegment({ hasAdapter: true, downBytesPerSecond: 21_375, upBytesPerSecond: 9_375 })).toEqual({
       label: 'wifi',
-      text: '↓ 2.4 MB/s',
-      more: [{ text: ' ↑ 0.3 MB/s' }],
+      text: '↓ 171 Kbps',
+      more: [{ text: ' ↑ 75 Kbps' }],
     })
     expect(wifiSegment({ hasAdapter: false })).toEqual({ label: 'wifi', text: 'off', dim: true })
     expect(wifiSegment({ hasAdapter: true }).text).toBe('—')

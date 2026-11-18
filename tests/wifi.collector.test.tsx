@@ -2,8 +2,6 @@ import { expect, test } from 'claude-code/testing'
 
 import { BAND, PANE, SESSION_ID, stubEngine } from './engine-stubs'
 
-const MB = 1024 * 1024
-
 // Answers the Wi-Fi command with the counters `bytes` holds now, and nothing else.
 function wifiHost(bytes: { received: number; sent: number } | undefined) {
   return { '/bin/sh': (argv: readonly string[]) => (argv[2]?.includes('/sys/class/net') && bytes ? `${bytes.received} ${bytes.sent}\n` : '') }
@@ -19,21 +17,22 @@ test('the band shows Wi-Fi download and upload, read every five seconds', async 
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   await clock.settle()
 
-  bytes.received = 6 * MB
-  bytes.sent = MB
+  // 6,250,000 bytes in 5 seconds is 1,250,000 bytes/s, or 10000 Kbps.
+  bytes.received = 6_250_000
+  bytes.sent = 625_000
   await clock.advance(5000)
   const band = await $.ui.mount({ ...BAND, surface: 'terminal' })
-  expect(await texts(band)).toContain('↓ 1.2 MB/s')
-  expect(await texts(band)).toContain(' ↑ 0.2 MB/s')
+  expect(await texts(band)).toContain('↓ 10000 Kbps')
+  expect(await texts(band)).toContain(' ↑ 1000 Kbps')
 
-  bytes.received += 2 * MB
+  bytes.received += 1_250_000
   await clock.advance(5000)
-  expect(await texts(band)).toContain('↓ 0.4 MB/s')
+  expect(await texts(band)).toContain('↓ 2000 Kbps')
   await band.unmount()
 
   const pane = await $.ui.mount({ ...PANE, surface: 'terminal' })
   await pane.press({ key: 'tab-system' })
-  expect(await texts(pane)).toContain('0.4 MB/s')
+  expect(await texts(pane)).toContain('2000 Kbps')
   await pane.unmount()
 })
 
