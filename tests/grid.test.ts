@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'claude-code/testing'
 
 import { EMPTY_ACTIVITY, EMPTY_GIT, EMPTY_LOOP, EMPTY_PRESSURE, EMPTY_SESSION, EMPTY_SPEED, EMPTY_STATS, EMPTY_SYSTEM, EMPTY_WIFI, type InspectorState } from '../src/domain/models'
-import { BAND_LABEL_WIDTH, bandRows } from '../src/ui/above-prompt'
+import { BAND_LABEL_WIDTH, bandRows, headerFacts, headerWidth } from '../src/ui/above-prompt'
 import { MAX_GAP, MIN_GAP, layoutGrid, meterText, type GridRow } from '../src/ui/components'
 
 const text = (parts: { text: string }[]) => parts.map(part => part.text).join('')
@@ -60,6 +60,17 @@ describe('band grid', () => {
     expect(lines[1]).toContain('subagents')
     expect(lines[1]).not.toContain('lines')
     expect(lines[0]).not.toContain('forecast')
+  })
+
+  test('the header ends where the grid ends on a wide band, and never cuts its own text', () => {
+    const grid = layoutGrid(bandRows(STATE, 0), 300, BAND_LABEL_WIDTH)
+    const widest = Math.max(...grid.map(line => text(line).length))
+    const facts = headerFacts({ ...EMPTY_SESSION, model: 'claude-opus-5-5', effort: 'medium', status: 'running' })
+    expect(widest).toBeLessThan(300)
+    expect(headerWidth(grid, facts, 300)).toBe(widest)
+    const narrow = layoutGrid([{ label: 'A', cells: [{ text: 'x' }] }], 300, 2)
+    expect(headerWidth(narrow, facts, 300)).toBe('Session Inspector'.length + 3 * 3 + 'claude-opus-5-5effort medium● running'.length)
+    expect(headerWidth(grid, facts, 20)).toBe(20)
   })
 
   test('a missing value keeps its column with a dash, and a message spans its row', () => {

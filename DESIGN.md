@@ -21,7 +21,7 @@ Session Inspector is an Operate surface drawn in a terminal: the person is in a 
 
 ## Shapes
 
-- **The band** is one rounded frame (`borderStyle: round`, dim border). Its first row holds the title on the left and the model, the effort and the session status on the right; then one row per line of figures, each led by a label in a fixed 9-column label column (`Context`, `Session`, `System`, and `Limits` when the account reports rate limits).
+- **The band** is one rounded frame (`borderStyle: round`, dim border). Its first row holds the title on the left and the model, the effort and the session status on the right, ending on the same column as the widest row of figures so both edges line up; then one row per line of figures, each led by a label in a fixed 9-column label column (`Context`, `Session`, `System`, and `Limits` when the account reports rate limits).
 - Every figure carries its own dim label before its value (`used`, `tokens`, `level`, `time`, `subagents`, `turns`, `tools`, `cost`, `CPU`, `RAM`, `speed`, `5h`).
 - When the band has fewer than five rows of room, the frame is dropped and the rows stay.
 - **Meters** are one scale for every percentage: ten full-height cells of `█` (filled) and `░` (empty), colored by level. They are the only graphic in the band.

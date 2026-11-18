@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- On a wide band the header's model, effort and status ended at the frame's edge, far right of the figures; they now end on the same column as the last figure.
+
 ## [0.3.1] - 2026-11-18
 
 ### Changed

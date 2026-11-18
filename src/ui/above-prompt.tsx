@@ -15,6 +15,7 @@ import {
   loadColor,
   meterText,
   type GridRow,
+  type Part,
   type Segment,
   type Ui,
 } from './components'
@@ -119,6 +120,30 @@ export function bandLayout(maxRows: number): { isFramed: boolean; rows: number }
   return { isFramed: false, rows: Math.max(1, Math.min(BAND_MAX_ROWS, maxRows)) }
 }
 
+const BAND_TITLE = 'Session Inspector'
+const HEADER_GAP = 3
+
+// The header's right-hand facts: model, effort of the last request and status.
+export function headerFacts(session: InspectorState['session']): Part[] {
+  const mark = STATUS_MARK[session.status]
+  const facts: (Part | undefined)[] = [
+    session.model ? { text: session.model, dim: true } : undefined,
+    session.effort ? { text: `effort ${session.effort}`, dim: true } : undefined,
+    { text: `${mark.glyph} ${session.status}`, color: mark.color, dim: !mark.color },
+  ]
+  return facts.filter((part): part is Part => part !== undefined)
+}
+
+function lineWidth(parts: readonly Part[]): number {
+  return parts.reduce((sum, part) => sum + part.text.length, 0)
+}
+
+// The header spans the grid so its last fact ends with the last column; never narrower than its own text.
+export function headerWidth(grid: readonly Part[][], facts: readonly Part[], columns: number): number {
+  const own = BAND_TITLE.length + HEADER_GAP * facts.length + lineWidth(facts)
+  return Math.min(columns, Math.max(own, ...grid.map(lineWidth)))
+}
+
 export function registerAbovePrompt(on: On): void {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
@@ -127,22 +152,23 @@ export function registerAbovePrompt(on: On): void {
     const [state, now] = await Promise.all([readState($), $.clock.now()])
     const layout = bandLayout(e.props.maxRows)
     const columns = e.props.bodyColumns - (layout.isFramed ? 4 : 0)
-    const lines = layoutGrid(bandRows(state, now).slice(0, layout.rows), columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
+    const grid = layoutGrid(bandRows(state, now).slice(0, layout.rows), columns, BAND_LABEL_WIDTH)
+    const lines = grid.map(parts => gridLine(ui, parts))
     if (!layout.isFramed) return <Box flexDirection="column">{lines}</Box>
 
-    const mark = STATUS_MARK[state.session.status]
+    const facts = headerFacts(state.session)
     return (
       <Box flexDirection="column" borderStyle="round" borderDimColor paddingX={1}>
-        <Box flexDirection="row" justifyContent="space-between">
+        <Box flexDirection="row" justifyContent="space-between" width={headerWidth(grid, facts, columns)}>
           <Text bold color="claude">
-            Session Inspector
+            {BAND_TITLE}
           </Text>
-          <Box flexDirection="row" columnGap={3}>
-            {state.session.model && <Text dimColor>{state.session.model}</Text>}
-            {state.session.effort && <Text dimColor>{`effort ${state.session.effort}`}</Text>}
-            <Text color={mark.color} dimColor={!mark.color}>
-              {`${mark.glyph} ${state.session.status}`}
-            </Text>
+          <Box flexDirection="row" columnGap={HEADER_GAP}>
+            {facts.map(fact => (
+              <Text color={fact.color} dimColor={fact.dim}>
+                {fact.text}
+              </Text>
+            ))}
           </Box>
         </Box>
         {lines}
