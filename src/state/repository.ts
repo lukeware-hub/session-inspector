@@ -11,6 +11,7 @@ import {
   EMPTY_STATS,
   EMPTY_SYSTEM,
   EMPTY_USAGE,
+  EMPTY_WIFI,
   type AgentRecord,
   type ContextReading,
   type FileRecord,
@@ -26,6 +27,7 @@ import {
   type SystemRecord,
   type ToolMetrics,
   type UsageRecord,
+  type WifiRecord,
 } from '../domain/models'
 import { appendEvent, type EventInput } from '../domain/reducers'
 
@@ -45,13 +47,14 @@ const filesState = atom({ plugin: 'session-inspector', key: 'files' } as const, 
 const gitState = atom({ plugin: 'session-inspector', key: 'git' } as const, EMPTY_GIT, { shape: 'git-1' })
 const speedState = atom({ plugin: 'session-inspector', key: 'speed' } as const, EMPTY_SPEED, { shape: 'speed-1' })
 const systemState = atom({ plugin: 'session-inspector', key: 'system' } as const, EMPTY_SYSTEM, { shape: 'system-1' })
+const wifiState = atom({ plugin: 'session-inspector', key: 'wifi' } as const, EMPTY_WIFI, { shape: 'wifi-1' })
 const pressureState = atom({ plugin: 'session-inspector', key: 'pressure' } as const, EMPTY_PRESSURE, { shape: 'pressure-1' })
 const resultsState = atom({ plugin: 'session-inspector', key: 'results' } as const, [], { shape: 'results-1' })
 const loopState = atom({ plugin: 'session-inspector', key: 'loop' } as const, EMPTY_LOOP, { shape: 'loop-1' })
 const tabState = atom({ plugin: 'session-inspector', key: 'tab' } as const, 'overview' as InspectorTab)
 
 export async function readState($: Engine): Promise<InspectorState> {
-  const [session, contextReadings, activity, stats, tools, agents, usage, files, git, speed, system, pressure, results, loop, tab] = await Promise.all([
+  const [session, contextReadings, activity, stats, tools, agents, usage, files, git, speed, system, wifi, pressure, results, loop, tab] = await Promise.all([
     read($, sessionState),
     read($, contextState),
     read($, activityState),
@@ -63,12 +66,13 @@ export async function readState($: Engine): Promise<InspectorState> {
     read($, gitState),
     read($, speedState),
     read($, systemState),
+    read($, wifiState),
     read($, pressureState),
     read($, resultsState),
     read($, loopState),
     read($, tabState),
   ])
-  return { session, contextReadings, activity, stats, tools, agents, usage, files, git, speed, system, pressure, results, loop, tab }
+  return { session, contextReadings, activity, stats, tools, agents, usage, files, git, speed, system, wifi, pressure, results, loop, tab }
 }
 
 export function readSession($: Engine): Promise<SessionRecord> {
@@ -125,6 +129,11 @@ export function readSystem($: Engine): Promise<SystemRecord> {
 
 export function changeSystem($: Engine, change: Change<SystemRecord>): Promise<SystemRecord> {
   return update($, systemState, change)
+}
+
+// The Wi-Fi reading belongs to the computer, so a new session keeps it.
+export function changeWifi($: Engine, change: Change<WifiRecord>): Promise<WifiRecord> {
+  return update($, wifiState, change)
 }
 
 export function changePressure($: Engine, change: Change<PressureRecord>): Promise<PressureRecord> {

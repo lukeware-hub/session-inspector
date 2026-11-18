@@ -9,13 +9,13 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
 - **Footer band**: a framed panel fixed right above the prompt, always visible:
 
   ```
-  ╭──────────────────────────────────────────────────────────────────────────────────────╮
-  │ Session Inspector                          claude-opus-5-5   effort high   ● running │
-  │ Context  used ████░░░░░░ 45%   tokens 454k / 1M   level Normal                       │
-  │ Session  time 1h 14m   subagents 2 running of 5   turns 8   tools 82   cost $19.35     │
-  │ System   CPU █░░░░░░░░░ 5%   RAM 713 MB   speed 99 tok/s                             │
-  │ Limits   5h ██░░░░░░░░ 16%   7d ░░░░░░░░░░ 3%                                        │
-  ╰──────────────────────────────────────────────────────────────────────────────────────╯
+  ╭───────────────────────────────────────────────────────────────────────────────────────╮
+  │ Session Inspector                          claude-opus-5-5   effort high   ● running  │
+  │ Context  used ████░░░░░░ 45%   tokens 454k / 1M   level Normal                        │
+  │ Session  time 1h 14m   subagents 2 running of 5   turns 8   tools 82   cost $19.35      │
+  │ System   CPU █░░░░░░░░░ 5%   RAM 713 MB   speed 99 tok/s   wifi ↓ 2.4 MB/s ↑ 0.3 MB/s │
+  │ Limits   5h ██░░░░░░░░ 16%   7d ░░░░░░░░░░ 3%                                         │
+  ╰───────────────────────────────────────────────────────────────────────────────────────╯
   ```
 
   Every figure has a label, every percentage uses the same ten-cell scale, the header shows the effort of the last request, and the Session row counts the subagents working right now. The Limits row appears when the account reports rate limits. When the band has less than five rows of room it drops the frame and keeps the rows.
@@ -27,7 +27,8 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
   - **Tools**: every tool that actually ran, with runs, failures, permission denials, share of all calls, average time, the size of its results and last use; the slowest tools; MCP calls grouped by server.
   - **Agents**: every subagent the session started, with type, status, task, turns, tool calls, duration, model and tools used.
   - **Files**: lines added and removed since the session began, and the files tools read or edited.
-  - **System**: CPU and memory of the Claude Code process tree, and model speed in tokens per second.
+  - **System**: CPU and memory of the Claude Code process tree, model speed in tokens per second, and the computer's Wi-Fi download and upload.
+- **Wi-Fi traffic**: the band's System row shows how many MB/s (1 MB = 1024 × 1024 bytes) the computer's Wi-Fi receives and sends, read every 2 seconds; it says `off` when no Wi-Fi adapter is up.
 - **Agent list colors**: each row of the agent list under the prompt gets a mark of its own color, filled while the agent works and hollow once it stops, so several subagents are told apart at a glance.
 - **Context alerts**: a notification when context usage rises into High (85% or more) or Critical (95% or more).
 - **Context forecast**: the band says how many turns are left before auto-compaction (or a full window) at the pace of the last turns, in amber from three turns and in red on the last one.
@@ -104,7 +105,7 @@ Opens the Tools section: each tool that ran in this session with its number of r
 
 ## Privacy and security
 
-The mod only observes. It never changes a prompt, a response, a tool call or a permission, never blocks a tool and never approves anything. It keeps only names, ids, counts, times, token figures and the paths of files tools read or edited, in the session's memory: never other tool arguments, file contents, prompts or model answers. To count changed lines and measure CPU and memory it runs two kinds of read-only local command: `git rev-parse` and `git diff --numstat`, and the operating system's process list (`ps`, or PowerShell on Windows). Nothing is written to disk or sent anywhere. See [SECURITY.md](SECURITY.md).
+The mod only observes. It never changes a prompt, a response, a tool call or a permission, never blocks a tool and never approves anything. It keeps only names, ids, counts, times, token figures and the paths of files tools read or edited, in the session's memory: never other tool arguments, file contents, prompts or model answers. To count changed lines, measure CPU and memory, and measure Wi-Fi traffic it runs three kinds of read-only local command: `git rev-parse` and `git diff --numstat`, the operating system's process list (`ps`, or PowerShell on Windows), and the Wi-Fi adapter's byte counters. Nothing is written to disk or sent anywhere. See [SECURITY.md](SECURITY.md).
 
 ## Development
 

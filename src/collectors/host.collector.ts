@@ -7,9 +7,13 @@ import {
   parseUnixTable,
   parseWindowsTable,
 } from '../domain/host'
-import { changeGit, changeSystem, readGit, readSystem, type Engine } from '../state/repository'
+import type { Timer } from 'claude-code'
+
+import { addWifiSample, parseWifiCounters, wifiCommand } from '../domain/wifi'
+import { changeGit, changeSystem, changeWifi, readGit, readSystem, type Engine } from '../state/repository'
 
 const SAMPLE_EVERY_MS = 10_000
+const WIFI_EVERY_MS = 2_000
 const COMMAND_TIMEOUT_MS = 10_000
 
 // Runs a read-only host command; undefined when it cannot run or fails.
@@ -45,6 +49,31 @@ export async function sampleSystem($: Engine): Promise<void> {
   const table = output === undefined ? undefined : isWindows ? parseWindowsTable(output) : parseUnixTable(output)
   const usage = table && claudeTreeUsage(table)
   if (usage) await changeSystem($, current => addSystemSample(current, usage, at))
+}
+
+let wifiTimer: Timer | undefined
+let isReadingWifi = false
+
+// Reads the Wi-Fi counters once; skipped while the previous reading still runs.
+export async function sampleWifi($: Engine): Promise<void> {
+  if (isReadingWifi) return
+  isReadingWifi = true
+  try {
+    const command = wifiCommand((await $.session.info()).platform)
+    const output = command && (await run($, command))
+    if (output === undefined) return
+    const at = await $.clock.now()
+    await changeWifi($, previous => addWifiSample(previous, parseWifiCounters(output), at))
+  } finally {
+    isReadingWifi = false
+  }
+}
+
+// Reads the Wi-Fi traffic now and every two seconds; a new session start replaces the timer.
+export function startWifiSampler($: Engine): void {
+  wifiTimer?.cancel()
+  inBackground(sampleWifi($))
+  wifiTimer = $.clock.every(WIFI_EVERY_MS, () => inBackground(sampleWifi($)))
 }
 
 // Host work runs beside the session and never holds up or breaks an event.

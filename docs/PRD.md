@@ -41,7 +41,7 @@ A developer using Claude Code sees, at any moment and without leaving the sessio
 ## Non-functional requirements
 
 - The mod never changes, blocks or approves anything, and a failure inside it never stops the session.
-- It keeps no tool arguments but file paths, no file contents, prompts, model answers or credentials, writes nothing to disk and makes no network request; its only host commands are read-only (`git` and the process list).
+- It keeps no tool arguments but file paths, no file contents, prompts, model answers or credentials, writes nothing to disk and makes no network request; its only host commands are read-only (`git`, the process list and the Wi-Fi byte counters).
 - It adds no runtime dependency and uses only the mod interface Claude Code ships.
 - It draws on the terminal and the desktop app from the same code, and fits the width it is given.
 - Its code is strictly typed TypeScript with no `any`.

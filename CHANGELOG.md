@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Wi-Fi traffic: the computer's Wi-Fi download and upload in MB/s, read every 2 seconds, in the band's System row and the System section; `off` when no Wi-Fi adapter is up.
+
 ## [0.2.0] - 2026-11-18
 
 ### Added

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { EMPTY_ACTIVITY, EMPTY_GIT, EMPTY_LOOP, EMPTY_PRESSURE, EMPTY_SESSION, EMPTY_SPEED, EMPTY_STATS, EMPTY_SYSTEM, type InspectorState } from '../src/domain/models'
+import { EMPTY_ACTIVITY, EMPTY_GIT, EMPTY_LOOP, EMPTY_PRESSURE, EMPTY_SESSION, EMPTY_SPEED, EMPTY_STATS, EMPTY_SYSTEM, EMPTY_WIFI, type InspectorState } from '../src/domain/models'
 import { BAND_LABEL_WIDTH, bandRows } from '../src/ui/above-prompt'
 import { MAX_GAP, MIN_GAP, layoutGrid, meterText, type GridRow } from '../src/ui/components'
 
@@ -21,6 +21,7 @@ const STATE: InspectorState = {
   git: { ...EMPTY_GIT, isRepo: true, added: 37, removed: 2, files: 2, checkedAt: 1 },
   speed: { ...EMPTY_SPEED, tokensPerSecond: 73 },
   system: { ...EMPTY_SYSTEM, cpuPercent: 6, memoryBytes: 708 * 1024 * 1024 },
+  wifi: EMPTY_WIFI,
   pressure: EMPTY_PRESSURE,
   results: [],
   loop: EMPTY_LOOP,

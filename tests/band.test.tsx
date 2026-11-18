@@ -60,7 +60,8 @@ test('CPU uses the same ten-cell scale as the context', async ($, on) => {
   let sample = 0
   const { clock } = stubEngine(on, {
     id: 'session-test-1',
-    host: { '/bin/sh': () => `50\n10 1 524288 ${cpuTimes[Math.min(sample++, 1)]} claude\n50 10 100 00:00:00 sh\n` },
+    // Only the process list answers; the Wi-Fi reading shares /bin/sh and must not use up a sample.
+    host: { '/bin/sh': argv => (argv[2]?.includes('ps -A') ? `50\n10 1 524288 ${cpuTimes[Math.min(sample++, 1)]} claude\n50 10 100 00:00:00 sh\n` : '') },
   })
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   await clock.advance(10_000)

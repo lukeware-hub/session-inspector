@@ -6,6 +6,7 @@ import {
   formatClock,
   formatDuration,
   formatPercent,
+  formatRate,
   formatTokens,
   formatUsd,
   limitLabel,
@@ -267,7 +268,7 @@ function files({ ui, state, columns }: View) {
 
 function system({ ui, state, columns }: View) {
   const { Box, Text } = ui
-  const { system: host, speed } = state
+  const { system: host, speed, wifi } = state
   return (
     <Box flexDirection="column">
       {field(ui, 'CPU', host.cpuPercent === undefined ? 'measured from the second sample' : `${host.cpuPercent}% of one core`, columns, host.cpuPercent === undefined ? undefined : loadColor(host.cpuPercent))}
@@ -278,7 +279,12 @@ function system({ ui, state, columns }: View) {
       {heading(ui, 'Model speed')}
       {field(ui, 'Last request', speed.tokensPerSecond === undefined ? '—' : `${speed.tokensPerSecond} tokens/s`, columns)}
       {field(ui, 'History', speed.history.length ? speed.history.join('  ') : '—', columns)}
+      {heading(ui, 'Wi-Fi')}
+      {field(ui, 'Download', wifi.hasAdapter === false ? 'off' : formatRate(wifi.downBytesPerSecond), columns)}
+      {field(ui, 'Upload', wifi.hasAdapter === false ? 'off' : formatRate(wifi.upBytesPerSecond), columns)}
+      {field(ui, 'Sampled at', formatClock(wifi.sampledAt), columns)}
       <Text dimColor>{fit('CPU and memory cover Claude Code and the tools it started, sampled at most every 10 seconds.', columns)}</Text>
+      <Text dimColor>{fit("Wi-Fi covers the whole computer's traffic, sampled every 2 seconds.", columns)}</Text>
     </Box>
   )
 }
