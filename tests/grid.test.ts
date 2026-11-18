@@ -2,7 +2,7 @@ import { describe, expect, test } from 'claude-code/testing'
 
 import { EMPTY_ACTIVITY, EMPTY_GIT, EMPTY_LOOP, EMPTY_PRESSURE, EMPTY_SESSION, EMPTY_SPEED, EMPTY_STATS, EMPTY_SYSTEM, EMPTY_WIFI, type InspectorState } from '../src/domain/models'
 import { BAND_LABEL_WIDTH, bandRows } from '../src/ui/above-prompt'
-import { MAX_GAP, MIN_GAP, layoutGrid, meterText, type GridRow } from '../src/ui/components'
+import { MIN_GAP, layoutGrid, meterText, type GridRow } from '../src/ui/components'
 
 const text = (parts: { text: string }[]) => parts.map(part => part.text).join('')
 
@@ -46,12 +46,20 @@ describe('band grid', () => {
     expect(meterText(100)).toBe('██████████ 100%')
   })
 
-  test('gaps widen with the room, up to the cap, and never shrink below three', () => {
+  test('gaps widen with the room until the last value meets the right edge, and never shrink below three', () => {
     const rows: GridRow[] = [{ label: 'A', cells: [{ text: 'x' }, { text: 'y' }] }]
     const gapOf = (columns: number) => text(layoutGrid(rows, columns, 2)[0]!).indexOf('y') - 3
     expect(gapOf(7)).toBe(MIN_GAP)
     expect(gapOf(9)).toBe(MIN_GAP + 2)
-    expect(gapOf(400)).toBe(MAX_GAP)
+    expect(gapOf(400)).toBe(400 - 2 - 2)
+  })
+
+  test('on a wide band the widest last value ends exactly on the right edge, and every column still lines up', () => {
+    for (const columns of [160, 211, 307]) {
+      const lines = layoutGrid(bandRows(STATE, 0), columns, BAND_LABEL_WIDTH).map(text)
+      expect(Math.max(...lines.map(line => line.length))).toBe(columns)
+      expect(starts(lines[2]!, ['CPU', 'RAM', 'speed'])).toEqual(starts(lines[1]!, ['time', 'subagents', 'turns']))
+    }
   })
 
   test('on a narrow band whole columns leave from the right, in every row alike', () => {

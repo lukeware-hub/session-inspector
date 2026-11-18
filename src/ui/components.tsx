@@ -54,7 +54,6 @@ export type Segment = Part & { label?: string; more?: Part[] }
 export type GridRow = { label: string; cells: Segment[]; span?: Segment }
 
 export const MIN_GAP = 3
-export const MAX_GAP = 8
 
 function valueWidth(segment: Segment): number {
   return segment.text.length + (segment.more ?? []).reduce((sum, part) => sum + part.text.length, 0)
@@ -65,7 +64,7 @@ function columnMax(rows: readonly GridRow[], column: number, measure: (cell: Seg
 }
 
 // Lays rows out as a grid: column N has one width in every row, labels and values start on the same cell,
-// gaps widen with the room (up to MAX_GAP), and whole columns leave from the right when the room runs out.
+// gaps share the spare room so the widest last value ends on the band's right edge, and whole columns leave from the right when the room runs out.
 export function layoutGrid(rows: readonly GridRow[], columns: number, labelWidth: number): Part[][] {
   const room = Math.max(1, columns - labelWidth)
   const count = Math.max(0, ...rows.map(row => (row.span ? 0 : row.cells.length)))
@@ -75,7 +74,10 @@ export function layoutGrid(rows: readonly GridRow[], columns: number, labelWidth
   const natural = (keep: number) => widths.slice(0, keep).reduce((sum, width) => sum + width, 0) + MIN_GAP * Math.max(0, keep - 1)
   let keep = count
   while (keep > 1 && natural(keep) > room) keep--
-  const gap = keep > 1 ? Math.min(MAX_GAP, MIN_GAP + Math.floor((room - natural(keep)) / (keep - 1))) : MIN_GAP
+  const gaps = Math.max(1, keep - 1)
+  const spare = Math.max(0, room - natural(keep))
+  // The first gaps take one cell more until the remainder is used up.
+  const gapAfter = (column: number) => MIN_GAP + Math.floor(spare / gaps) + (column < spare % gaps ? 1 : 0)
 
   return rows.map(row => {
     const line: Part[] = [{ text: row.label.padEnd(labelWidth), dim: true }]
@@ -85,7 +87,7 @@ export function layoutGrid(rows: readonly GridRow[], columns: number, labelWidth
       const label = labels[column] ?? 0
       if (label) line.push({ text: `${(cell.label ?? '').padEnd(label)} `, dim: true })
       line.push({ text: keep === 1 ? fit(cell.text, room - (label ? label + 1 : 0)) : cell.text, color: cell.color, bold: cell.bold, dim: cell.dim }, ...(cell.more ?? []))
-      const pad = (values[column] ?? 0) - valueWidth(cell) + gap
+      const pad = (values[column] ?? 0) - valueWidth(cell) + gapAfter(column)
       if (column < cells.length - 1) line.push({ text: ' '.repeat(pad) })
     })
     return line

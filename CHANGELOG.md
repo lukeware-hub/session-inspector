@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- On a wide band the figures stopped short of the right edge while the model, effort and status sat on it; the gaps between columns now share the whole width, so the last column ends on the right edge, under the status.
+
 ## [0.3.1] - 2026-11-18
 
 ### Changed
