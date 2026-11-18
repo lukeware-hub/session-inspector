@@ -1,0 +1,15 @@
+{
+  "name": "session-inspector",
+  "owner": { "name": "lukeware-hub" },
+  "metadata": {
+    "description": "Session Inspector: a native observability dashboard for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "session-inspector",
+      "source": "./",
+      "description": "Native Developer Observability Dashboard for Claude Code: context, session, activity, tools and agents of the current session.",
+      "version": "0.1.0"
+    }
+  ]
+}
