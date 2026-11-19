@@ -57,12 +57,12 @@ function sessionRow(state: InspectorState, now: number): GridRow {
     cells: [
       { label: 'time', text: formatDuration(sessionDurationMs(state.session, now)) },
       subagentsSegment(agents),
-      { label: 'turns', text: String(stats.totalTurns) },
-      { label: 'tools', text: String(stats.totalToolCalls) },
       usage.costUsd === undefined ? missing('cost') : { label: 'cost', text: formatUsd(usage.costUsd) },
       hasLines
         ? { label: 'lines', text: `+${git.added}`, color: 'diffAdded', more: [{ text: ` −${git.removed}`, color: 'diffRemoved' }] }
         : missing('lines'),
+      { label: 'turns', text: String(stats.totalTurns) },
+      { label: 'tools', text: String(stats.totalToolCalls) },
     ],
   }
 }
