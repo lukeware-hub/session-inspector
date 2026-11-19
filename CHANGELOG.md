@@ -2,7 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.2] - 2026-11-19
+
+### Changed
+
+- The band's Session row now reads time, subagents, cost and lines, so cost sits under speed and lines under wifi.
+- Turns and tools moved to the last row, after the rate-limit windows; that row now shows even when the account reports no limits.
 
 ### Fixed
 
