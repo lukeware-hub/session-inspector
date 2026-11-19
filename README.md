@@ -12,9 +12,9 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
   ╭───────────────────────────────────────────────────────────────────────────────────────╮
   │ Session Inspector                          claude-opus-5-5   effort high   ● running  │
   │ Context  used ████░░░░░░ 45%   tokens 454k / 1M   level Normal                        │
-  │ Session  time 1h 14m   subagents 2 running of 5   turns 8   tools 82   cost $19.35      │
+  │ Session  time 1h 14m   subagents 2 running of 5   cost $19.35   lines +37 −2            │
   │ System   CPU █░░░░░░░░░ 5%   RAM 713 MB   speed 99 tok/s   wifi ↓ 171 Kbps ↑ 75 Kbps  │
-  │ Limits   5h ██░░░░░░░░ 16%   7d ░░░░░░░░░░ 3%                                         │
+  │ Limits   5h ██░░░░░░░░ 16%   7d ░░░░░░░░░░ 3%   turns 8   tools 82                    │
   ╰───────────────────────────────────────────────────────────────────────────────────────╯
   ```
 
