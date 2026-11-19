@@ -50,7 +50,7 @@ export function subagentsSegment(agents: InspectorState['agents']): Segment {
 }
 
 function sessionRow(state: InspectorState, now: number): GridRow {
-  const { stats, agents, usage, git } = state
+  const { agents, usage, git } = state
   const hasLines = git.isRepo && git.checkedAt !== undefined
   return {
     label: 'Session',
@@ -61,8 +61,6 @@ function sessionRow(state: InspectorState, now: number): GridRow {
       hasLines
         ? { label: 'lines', text: `+${git.added}`, color: 'diffAdded', more: [{ text: ` −${git.removed}`, color: 'diffRemoved' }] }
         : missing('lines'),
-      { label: 'turns', text: String(stats.totalTurns) },
-      { label: 'tools', text: String(stats.totalToolCalls) },
     ],
   }
 }
@@ -89,12 +87,15 @@ function systemRow({ system, speed, wifi }: InspectorState): GridRow {
   }
 }
 
-// One row for the rate-limit windows, only when the account reports them.
-function limitsRow({ usage }: InspectorState): GridRow | undefined {
-  if (!usage.rateLimits.length) return undefined
+// The last row: any rate-limit windows the account reports, then turns and tools.
+function limitsRow({ usage, stats }: InspectorState): GridRow {
   return {
     label: 'Limits',
-    cells: usage.rateLimits.map(limit => ({ label: limitLabel(limit.kind), text: meterText(limit.percentUsed), color: loadColor(limit.percentUsed) })),
+    cells: [
+      ...usage.rateLimits.map(limit => ({ label: limitLabel(limit.kind), text: meterText(limit.percentUsed), color: loadColor(limit.percentUsed) })),
+      { label: 'turns', text: String(stats.totalTurns) },
+      { label: 'tools', text: String(stats.totalToolCalls) },
+    ],
   }
 }
 

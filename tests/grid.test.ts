@@ -34,7 +34,8 @@ describe('band grid', () => {
     const [context, session, system, limits] = lines
     expect(starts(context!, ['used', 'tokens', 'level'])).toEqual(starts(session!, ['time', 'subagents', 'cost']))
     expect(starts(system!, ['CPU', 'RAM', 'speed', 'wifi'])).toEqual(starts(session!, ['time', 'subagents', 'cost', 'lines']))
-    expect(starts(limits!, ['5h', '7d'])).toEqual(starts(session!, ['time', 'subagents']))
+    expect(starts(limits!, ['5h', '7d', 'turns', 'tools'])).toEqual(starts(session!, ['time', 'subagents', 'cost', 'lines']))
+    expect(session).not.toContain('turns')
   })
 
   test('meters and their percentages line up across rows', () => {
@@ -66,7 +67,7 @@ describe('band grid', () => {
     const lines = layoutGrid(bandRows(STATE, 0), 70, BAND_LABEL_WIDTH).map(text)
     for (const line of lines) expect(line.length).toBeLessThanOrEqual(70)
     expect(lines[1]).toContain('subagents')
-    expect(lines[1]).not.toContain('tools')
+    expect(lines[1]).not.toContain('lines')
     expect(lines[0]).not.toContain('forecast')
   })
 
@@ -74,6 +75,7 @@ describe('band grid', () => {
     const waiting = { ...STATE, contextReadings: [], usage: { rateLimits: [] }, git: EMPTY_GIT }
     const lines = layoutGrid(bandRows(waiting, 0), 160, BAND_LABEL_WIDTH).map(text)
     expect(lines[0]).toBe('Context  waiting for the first response')
-    expect(lines[1]).toMatch(/cost\s+—\s+lines\s+—\s+turns\s+14\s+tools\s+151$/)
+    expect(lines[1]).toMatch(/cost\s+—\s+lines\s+—$/)
+    expect(lines[3]).toMatch(/^Limits\s+turns\s+14\s+tools\s+151$/)
   })
 })
