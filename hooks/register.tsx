@@ -1,6 +1,6 @@
 import type { Register } from 'claude-code'
 
-import { startAccountUsagePoller } from '../src/collectors/account-usage.collector'
+import { startAccountUsagePoller, startLiveUsagePoller } from '../src/collectors/account-usage.collector'
 import { registerAgentsCollector } from '../src/collectors/agents.collector'
 import { recordContext, registerContextCollector } from '../src/collectors/context.collector'
 import { inBackground, sampleSystem, startWifiSampler } from '../src/collectors/host.collector'
@@ -22,6 +22,7 @@ export const register: Register = on => {
     inBackground(sampleSystem($))
     startWifiSampler($)
     startAccountUsagePoller($)
+    startLiveUsagePoller($)
     return next(e)
   }).catch(($, e, next) => next(e))
 

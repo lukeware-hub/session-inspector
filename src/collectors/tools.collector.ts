@@ -10,7 +10,8 @@ import {
   type FileTouch,
   type ToolOutcome,
 } from '../domain/reducers'
-import { changeAgents, changeFiles, changeStats, changeTools, logEvent, touchSession } from '../state/repository'
+import { toolLines } from '../domain/code-lines'
+import { changeAgents, changeFiles, changeStats, changeTools, changeUsage, logEvent, touchSession } from '../state/repository'
 import { recordCallInsights } from './insights.collector'
 
 const FILE_TOUCH: Record<string, FileTouch> = {
@@ -49,7 +50,15 @@ export function registerToolsCollector(on: On): void {
     await changeTools($, tools => finishTool(tools, name, end - at, outcome))
     if (outcome === 'denied') await logEvent($, { type: 'tool.denied', label: `${name} denied`, timestamp: end, toolName: name, agentId })
     if (outcome === 'error') await logEvent($, { type: 'tool.error', label: `${name} failed`, timestamp: end, toolName: name, agentId })
-    await recordCallInsights($, { tool: name, input: e, file: path, resultText: ran.text, failed: outcome !== 'ok', agentId, at: end })
+    const lines = outcome === 'ok' ? toolLines(name, ran.result) : undefined
+    if (lines && (lines.added || lines.removed)) {
+      await changeUsage($, usage => ({
+        ...usage,
+        linesAdded: (usage.linesAdded ?? 0) + lines.added,
+        linesRemoved: (usage.linesRemoved ?? 0) + lines.removed,
+      }))
+    }
+    await recordCallInsights($,{ tool: name, input: e, file: path, resultText: ran.text, failed: outcome !== 'ok', agentId, at: end })
     return ran
   }).catch(($, e, next) => next(e))
 }

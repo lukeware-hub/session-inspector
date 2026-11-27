@@ -24,7 +24,7 @@ test('the account usage answer becomes one rate-limit window per reported window
   expect(parseAccountUsage('{"five_hour":null}')).toBeUndefined()
 })
 
-test('the band reads the account usage at start and again every minute, as /usage shows it', async ($, on) => {
+test('the band reads the account usage at start and again every ten seconds, as /usage shows it', async ($, on) => {
   const usage = { fiveHour: 3, sevenDay: 39 }
   const fetched: { url: string; auth?: string }[] = []
   const { clock } = stubEngine(on, { id: SESSION_ID })
@@ -42,7 +42,7 @@ test('the band reads the account usage at start and again every minute, as /usag
   expect(fetched[0]).toEqual({ url: 'https://api.anthropic.com/api/oauth/usage', auth: 'handle-1' })
 
   usage.fiveHour = 7
-  await clock.advance(60_000)
+  await clock.advance(10_000)
   expect((await texts(band)).join('')).toContain('7%')
   await band.unmount()
 
@@ -62,6 +62,6 @@ test('without a subscription sign-in the account usage is never fetched', async 
   })
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   await clock.settle()
-  await clock.advance(60_000)
+  await clock.advance(10_000)
   expect(calls).toBe(0)
 })

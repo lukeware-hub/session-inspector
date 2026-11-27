@@ -39,6 +39,7 @@ export function registerContextCollector(on: On): void {
       // A cost-only change keeps the windows as they are: the account usage poll may hold newer ones.
       const hasNewLimits = e.changed.includes('rateLimits')
       await changeUsage($, current => ({
+        ...current,
         costUsd: e.cost?.usd,
         hasUnknownPrice: e.cost?.hasUnknownPrice,
         rateLimits: hasNewLimits

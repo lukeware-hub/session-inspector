@@ -106,6 +106,9 @@ export type UsageRecord = {
   costUsd?: number
   hasUnknownPrice?: boolean
   rateLimits: RateLimitRecord[]
+  // Lines the Edit and Write tools changed this session, as /usage counts them.
+  linesAdded?: number
+  linesRemoved?: number
 }
 
 export type FileRecord = { path: string; reads: number; edits: number; lastAt: number }

@@ -4,7 +4,37 @@ import { ACCOUNT_USAGE_HEADERS, ACCOUNT_USAGE_URL, parseAccountUsage } from '../
 import { changeUsage, type Engine } from '../state/repository'
 import { inBackground } from './host.collector'
 
-const ACCOUNT_USAGE_EVERY_MS = 60_000
+// Both readings refresh every ten seconds; a refused or failed account read keeps the last figures.
+const ACCOUNT_USAGE_EVERY_MS = 10_000
+const LIVE_USAGE_EVERY_MS = 10_000
+
+let liveUsageTimer: Timer | undefined
+let isReadingLiveUsage = false
+
+// The session's cost as the engine totals it now. A measurement comes only with a model
+// response, so other mods' model calls would otherwise wait for the next one to show.
+export async function refreshLiveUsage($: Engine): Promise<void> {
+  if (isReadingLiveUsage) return
+  isReadingLiveUsage = true
+  try {
+    const { cost } = await $.session.usage()
+    if (!cost) return
+    await changeUsage($, current =>
+      current.costUsd === cost.usd && current.hasUnknownPrice === cost.hasUnknownPrice
+        ? current
+        : { ...current, costUsd: cost.usd, hasUnknownPrice: cost.hasUnknownPrice },
+    )
+  } finally {
+    isReadingLiveUsage = false
+  }
+}
+
+// Reads the session's cost now and every ten seconds; a new session start replaces the timer.
+export function startLiveUsagePoller($: Engine): void {
+  liveUsageTimer?.cancel()
+  inBackground(refreshLiveUsage($))
+  liveUsageTimer = $.clock.every(LIVE_USAGE_EVERY_MS, () => inBackground(refreshLiveUsage($)))
+}
 
 let accountUsageTimer: Timer | undefined
 let isReadingAccountUsage = false
@@ -26,7 +56,7 @@ export async function refreshAccountUsage($: Engine): Promise<void> {
   }
 }
 
-// Reads the account usage now and every minute; a new session start replaces the timer.
+// Reads the account usage now and every ten seconds; a new session start replaces the timer.
 export function startAccountUsagePoller($: Engine): void {
   accountUsageTimer?.cancel()
   inBackground(refreshAccountUsage($))
