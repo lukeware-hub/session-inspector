@@ -177,9 +177,15 @@ function card(ui: Ui, cell: Segment | undefined, width: number | string) {
   if (!cell) return <Box width={width} flexShrink={0} />
   const isAlert = cell.color === 'warning' || cell.color === 'error'
   return (
-    <Box width={width} flexShrink={0} flexDirection="row" columnGap={1} borderStyle="round" borderColor={isAlert ? cell.color : undefined} borderDimColor={!isAlert} paddingX={1} paddingY={0}>
-      {cell.label && <Text dimColor>{cell.label}</Text>}
-      <Box flexDirection="row" flexShrink={1}>
+    // The border takes the theme's plain text color (light grey on a dark theme), not the dimmed one, so it reads on the dark band.
+    // The card clips what does not fit, so a long value never runs into the next card.
+    <Box width={width} flexShrink={0} flexDirection="row" columnGap={1} borderStyle="round" borderColor={isAlert ? cell.color : undefined} paddingX={1} paddingY={0} overflow="hidden">
+      {cell.label && (
+        <Box flexShrink={0}>
+          <Text dimColor>{cell.label}</Text>
+        </Box>
+      )}
+      <Box flexDirection="row" flexShrink={1} minWidth={0} overflow="hidden">
         <Text color={cell.color} bold={cell.bold} dimColor={cell.dim} wrap="truncate-end">
           {cell.text}
         </Text>
@@ -198,9 +204,13 @@ function card(ui: Ui, cell: Segment | undefined, width: number | string) {
 export function cardRows(ui: Ui, rows: readonly GridRow[], columns: number, labelWidth: number) {
   const { Box, Text } = ui
   const room = Math.max(1, columns - labelWidth)
-  const across = cardColumns(room)
-  const width = `${100 / across}%`
   const isNarrow = columns < NARROW_COLUMNS
+  // The widest card (label, value, border and padding), with a margin for the desktop's wider glyphs such as the meter's
+  // blocks: four across only when four of those fit, else two, else one.
+  const widest = Math.max(0, ...rows.flatMap(row => row.cells.filter(cell => !(isNarrow && cell.optional)).map(cell => (cell.label ? cell.label.length + 1 : 0) + valueWidth(cell) + 4)))
+  const needed = Math.ceil(widest * 1.2)
+  const across = Math.min(cardColumns(room), room >= needed * 4 ? 4 : room >= needed * 2 ? 2 : 1) as 1 | 2 | 4
+  const width = `${100 / across}%`
   return rows.map(row => {
     const cells = row.cells.filter(cell => !(isNarrow && cell.optional))
     const slots = Math.max(cells.length, 1)

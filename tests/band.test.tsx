@@ -163,3 +163,22 @@ test('cards: every row holds the same number of slots, so the columns line up', 
   expect(widths.length % 4).toBe(0)
   await band.unmount()
 })
+
+test('desktop cards: a plain (not dimmed) border, and fewer columns when four would not fit their content', async ($, on) => {
+  stubEngine(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  await $.session.measure({ context: { tokens: 90_000, window: 1_000_000 }, cost: { usd: 1 }, rateLimits: [], changed: ['context', 'cost', 'rateLimits'] })
+  const boxes = async (bodyColumns: number) => {
+    const band = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 5, bodyColumns }, surface: 'desktop' })
+    const found = await band.findAll({ type: 'Box' })
+    await band.unmount()
+    return found
+  }
+  const wide = await boxes(160)
+  const cards = wide.filter(found => found.props.width === '25%' && found.props.borderStyle === 'round')
+  expect(cards.length).toBeGreaterThan(0)
+  for (const card of cards) expect(card.props.borderDimColor).toBeFalsy()
+  const mid = await boxes(90)
+  expect(mid.some(found => found.props.width === '25%')).toBe(false)
+  expect(mid.some(found => found.props.width === '50%')).toBe(true)
+})
