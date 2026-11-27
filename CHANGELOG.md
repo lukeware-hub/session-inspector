@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- The inspector no longer calls `https://api.anthropic.com/api/oauth/usage`. The rate-limit windows come only from what Claude Code reports with each model response, in the terminal and in the desktop app. They now update when this session gets a response, so usage from other sessions or devices shows at the next response. The mod makes no network request, as the README states.
+
 ## [0.4.11] - 2026-11-27
 
 ### Fixed

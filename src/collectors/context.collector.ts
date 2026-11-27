@@ -36,7 +36,7 @@ export function registerContextCollector(on: On): void {
   on('session.measure', async ($, e, next) => {
     if (e.changed.includes('context')) await recordContext($, e.context)
     if (e.changed.includes('cost') || e.changed.includes('rateLimits')) {
-      // A cost-only change keeps the windows as they are: the account usage poll may hold newer ones.
+      // A cost-only change keeps the windows the last response reported.
       const hasNewLimits = e.changed.includes('rateLimits')
       await changeUsage($, current => ({
         ...current,

@@ -1,6 +1,6 @@
 import type { Register } from 'claude-code'
 
-import { recountLines, startAccountUsagePoller, startLiveUsagePoller } from '../src/collectors/account-usage.collector'
+import { recountLines, startLiveUsagePoller } from '../src/collectors/account-usage.collector'
 import { registerAgentsCollector } from '../src/collectors/agents.collector'
 import { recordContext, registerContextCollector } from '../src/collectors/context.collector'
 import { inBackground, sampleSystem, startWifiSampler } from '../src/collectors/host.collector'
@@ -21,7 +21,6 @@ export const register: Register = on => {
     await recordContext($, (await $.session.usage()).context)
     inBackground(sampleSystem($))
     startWifiSampler($)
-    startAccountUsagePoller($)
     startLiveUsagePoller($)
     inBackground(recountLines($))
     return next(e)
