@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.10] - 2026-11-27
+
+### Changed
+
+- The band's `lines` field is now `session code`, the session's total of code changed by Edit and Write (Overview: "Session code"). The git count in the Files tab is "Code changed (git)".
+
 ## [0.4.9] - 2026-11-27
 
 ### Fixed
