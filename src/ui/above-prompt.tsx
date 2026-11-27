@@ -11,7 +11,8 @@ import {
   STATUS_MARK,
   forecastSegment,
   cardRows,
-  cardsFit,
+  tableFits,
+  tableLines,
   gridLine,
   layoutGrid,
   loadColor,
@@ -130,12 +131,16 @@ export function registerAbovePrompt(on: On): void {
     const [state, now] = await Promise.all([readState($), $.clock.now()])
     const isDesktop = e.surface === 'desktop'
     const allRows = bandRows(state, now)
-    // Cards need three lines a row: the desktop always draws them (the band scrolls past its height); the terminal only with room to spare.
-    const isCards = isDesktop || cardsFit(e.props.maxRows, allRows.length)
+    // The desktop always draws cards (the band scrolls past its height). The terminal draws one table with shared lines,
+    // two lines a row, when the band has room for it, and the one-line grid otherwise.
+    const isTable = !isDesktop && tableFits(e.props.maxRows, allRows.length)
+    const isCards = isDesktop || isTable
     const layout = isCards ? { isFramed: isDesktop ? e.props.maxRows >= 5 : true, rows: allRows.length } : bandLayout(e.props.maxRows)
     const columns = e.props.bodyColumns - (layout.isFramed ? 4 : 0)
     const rows = allRows.slice(0, layout.rows)
-    const lines = isCards ? cardRows(ui, rows, columns, BAND_LABEL_WIDTH, !isDesktop) : layoutGrid(rows, columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
+    const lines = isDesktop
+      ? cardRows(ui, rows, columns, BAND_LABEL_WIDTH)
+      : (isTable ? tableLines(rows, columns, BAND_LABEL_WIDTH) : layoutGrid(rows, columns, BAND_LABEL_WIDTH)).map(parts => gridLine(ui, parts))
     if (!layout.isFramed) return <Box flexDirection="column">{lines}</Box>
 
     const mark = STATUS_MARK[state.session.status]

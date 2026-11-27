@@ -133,19 +133,26 @@ test('the desktop band keeps every row and drops the optional figures when narro
   await narrow.unmount()
 })
 
-test('cards: a tall terminal and the desktop draw bordered cards, a short terminal keeps the text grid', async ($, on) => {
+test('the desktop draws cards; a tall terminal draws one table with shared lines; a short terminal keeps the text grid', async ($, on) => {
   stubEngine(on)
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   await $.session.measure({ context: { tokens: 90_000, window: 1_000_000 }, cost: { usd: 1 }, rateLimits: [], changed: ['context', 'cost', 'rateLimits'] })
-  const count = async (surface: 'terminal' | 'desktop', maxRows: number, bodyColumns = 140) => {
-    const band = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows, bodyColumns }, surface })
-    const cards = (await band.findAll({ type: 'Box' })).filter(found => found.props.width === '25%' || found.props.width === Math.floor((bodyColumns - 4 - 9) / 4))
+  const draw = async (surface: 'terminal' | 'desktop', maxRows: number) => {
+    const band = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows, bodyColumns: 140 }, surface })
+    const cards = (await band.findAll({ type: 'Box' })).filter(found => found.props.width === '25%').length
+    const texts = (await band.findAll({ type: 'Text' })).map(found => found.text)
     await band.unmount()
-    return cards.length
+    return { cards, texts }
   }
-  expect(await count('terminal', 20)).toBeGreaterThanOrEqual(12)
-  expect(await count('desktop', 5)).toBeGreaterThanOrEqual(12)
-  expect(await count('terminal', 8)).toBe(0)
+  const desktop = await draw('desktop', 5)
+  expect(desktop.cards).toBeGreaterThanOrEqual(12)
+  const tall = await draw('terminal', 20)
+  expect(tall.cards).toBe(0)
+  expect(tall.texts.some(text => text.startsWith('╭') && text.includes('┬'))).toBe(true)
+  expect(tall.texts.some(text => text.startsWith('├') && text.includes('┼'))).toBe(true)
+  expect(tall.texts.some(text => text.startsWith('╰'))).toBe(true)
+  const short = await draw('terminal', 8)
+  expect(short.texts.some(text => text.includes('╭'))).toBe(false)
 })
 
 test('cards: every row holds the same number of slots, so the columns line up', async ($, on) => {
