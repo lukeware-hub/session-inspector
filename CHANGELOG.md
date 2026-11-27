@@ -2,6 +2,13 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- On the Claude desktop app the band no longer misaligns or cuts off its last row: its font has no fixed width, so each row there is a label and its figures as blocks that wrap onto the next line, and every row is kept.
+- When the desktop band is narrower than 72 cells, the optional figures (forecast, lines, speed, wifi) leave first.
+
 ## [0.3.2] - 2026-11-19
 
 ### Changed

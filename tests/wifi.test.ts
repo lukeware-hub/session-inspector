@@ -50,8 +50,9 @@ describe('wifi rates', () => {
       label: 'wifi',
       text: '↓ 171 Kbps',
       more: [{ text: ' ↑ 75 Kbps' }],
+      optional: true,
     })
-    expect(wifiSegment({ hasAdapter: false })).toEqual({ label: 'wifi', text: 'off', dim: true })
+    expect(wifiSegment({ hasAdapter: false })).toEqual({ label: 'wifi', text: 'off', dim: true, optional: true })
     expect(wifiSegment({ hasAdapter: true }).text).toBe('—')
   })
 })

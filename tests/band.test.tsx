@@ -117,3 +117,18 @@ test('model speed is measured per request', async ($, on) => {
   expect(await pane.find({ type: 'Text', text: /^250 tokens\/s$/ })).toBeTruthy()
   await pane.unmount()
 })
+
+test('the desktop band keeps every row and drops the optional figures when narrow', async ($, on) => {
+  stubEngine(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  await $.session.measure({ context: { tokens: 90_000, window: 1_000_000 }, cost: { usd: 1 }, changed: ['context', 'cost'] })
+  const wide = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 5, bodyColumns: 120 }, surface: 'desktop' })
+  const wideTexts = (await wide.findAll({ type: 'Text' })).map(found => found.text.trim())
+  for (const label of ['Context', 'Session', 'Limits', 'forecast', 'lines']) expect(wideTexts).toContain(label)
+  await wide.unmount()
+  const narrow = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 5, bodyColumns: 50 }, surface: 'desktop' })
+  const narrowTexts = (await narrow.findAll({ type: 'Text' })).map(found => found.text.trim())
+  for (const label of ['Context', 'Limits', 'time', 'cost']) expect(narrowTexts).toContain(label)
+  for (const label of ['forecast', 'lines']) expect(narrowTexts).not.toContain(label)
+  await narrow.unmount()
+})

@@ -10,6 +10,7 @@ import {
   LEVEL_COLOR,
   STATUS_MARK,
   forecastSegment,
+  flowRows,
   gridLine,
   layoutGrid,
   loadColor,
@@ -22,8 +23,8 @@ import {
 export const BAND_LABEL_WIDTH = 9
 
 // A figure with no value yet: its label stays, so the grid keeps its columns.
-function missing(label: string): Segment {
-  return { label, text: '—', dim: true }
+function missing(label: string, optional = false): Segment {
+  return { label, text: '—', dim: true, optional }
 }
 
 function contextRow(state: InspectorState): GridRow {
@@ -37,7 +38,7 @@ function contextRow(state: InspectorState): GridRow {
       { label: 'used', text: meterText(reading.percent), color },
       { label: 'tokens', text: `${formatTokens(reading.tokens)} / ${formatTokens(reading.window)}` },
       { label: 'level', text: levelLabel(level), color, bold: level === 'high' || level === 'critical' },
-      forecastSegment(state) ?? missing('forecast'),
+      forecastSegment(state) ?? missing('forecast', true),
     ],
   }
 }
@@ -59,17 +60,17 @@ function sessionRow(state: InspectorState, now: number): GridRow {
       subagentsSegment(agents),
       usage.costUsd === undefined ? missing('cost') : { label: 'cost', text: formatUsd(usage.costUsd) },
       hasLines
-        ? { label: 'lines', text: `+${git.added}`, color: 'diffAdded', more: [{ text: ` −${git.removed}`, color: 'diffRemoved' }] }
-        : missing('lines'),
+        ? { label: 'lines', text: `+${git.added}`, color: 'diffAdded', more: [{ text: ` −${git.removed}`, color: 'diffRemoved' }], optional: true }
+        : missing('lines', true),
     ],
   }
 }
 
 // The computer's Wi-Fi download and upload; "off" when no Wi-Fi adapter is up.
 export function wifiSegment(wifi: WifiRecord): Segment {
-  if (wifi.hasAdapter === false) return { label: 'wifi', text: 'off', dim: true }
-  if (wifi.downBytesPerSecond === undefined || wifi.upBytesPerSecond === undefined) return missing('wifi')
-  return { label: 'wifi', text: `↓ ${formatRate(wifi.downBytesPerSecond)}`, more: [{ text: ` ↑ ${formatRate(wifi.upBytesPerSecond)}` }] }
+  if (wifi.hasAdapter === false) return { label: 'wifi', text: 'off', dim: true, optional: true }
+  if (wifi.downBytesPerSecond === undefined || wifi.upBytesPerSecond === undefined) return missing('wifi', true)
+  return { label: 'wifi', text: `↓ ${formatRate(wifi.downBytesPerSecond)}`, more: [{ text: ` ↑ ${formatRate(wifi.upBytesPerSecond)}` }], optional: true }
 }
 
 function systemRow({ system, speed, wifi }: InspectorState): GridRow {
@@ -81,7 +82,7 @@ function systemRow({ system, speed, wifi }: InspectorState): GridRow {
     cells: [
       system.cpuPercent === undefined ? missing('CPU') : { label: 'CPU', text: meterText(system.cpuPercent), color: loadColor(system.cpuPercent) },
       system.memoryBytes === undefined ? missing('RAM') : { label: 'RAM', text: formatBytes(system.memoryBytes) },
-      speed.tokensPerSecond === undefined ? missing('speed') : { label: 'speed', text: `${speed.tokensPerSecond} tok/s` },
+      speed.tokensPerSecond === undefined ? missing('speed', true) : { label: 'speed', text: `${speed.tokensPerSecond} tok/s`, optional: true },
       wifiSegment(wifi),
     ],
   }
@@ -126,19 +127,22 @@ export function registerAbovePrompt(on: On): void {
     const ui: Ui = $.ui.resolve(e)
     const { Box, Text } = ui
     const [state, now] = await Promise.all([readState($), $.clock.now()])
-    const layout = bandLayout(e.props.maxRows)
+    const isDesktop = e.surface === 'desktop'
+    // The desktop wraps its figures, so it keeps every row and lets the band's own scroll take the height.
+    const layout = isDesktop ? { isFramed: e.props.maxRows >= 5, rows: BAND_MAX_ROWS } : bandLayout(e.props.maxRows)
     const columns = e.props.bodyColumns - (layout.isFramed ? 4 : 0)
-    const lines = layoutGrid(bandRows(state, now).slice(0, layout.rows), columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
+    const rows = bandRows(state, now).slice(0, isDesktop ? undefined : layout.rows)
+    const lines = isDesktop ? flowRows(ui, rows, columns, BAND_LABEL_WIDTH) : layoutGrid(rows, columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
     if (!layout.isFramed) return <Box flexDirection="column">{lines}</Box>
 
     const mark = STATUS_MARK[state.session.status]
     return (
       <Box flexDirection="column" borderStyle="round" borderDimColor paddingX={1}>
-        <Box flexDirection="row" justifyContent="space-between">
+        <Box flexDirection="row" justifyContent="space-between" flexWrap={isDesktop ? 'wrap' : undefined}>
           <Text bold color="claude">
             Session Inspector
           </Text>
-          <Box flexDirection="row" columnGap={3}>
+          <Box flexDirection="row" columnGap={3} flexWrap={isDesktop ? 'wrap' : undefined}>
             {state.session.model && <Text dimColor>{state.session.model}</Text>}
             {state.session.effort && <Text dimColor>{`effort ${state.session.effort}`}</Text>}
             <Text color={mark.color} dimColor={!mark.color}>
