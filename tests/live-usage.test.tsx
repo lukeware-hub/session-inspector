@@ -30,12 +30,12 @@ test('the band counts the lines each edit changed, at once, and a failed edit ad
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
 
   const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
-  expect(after(await texts(band), 'lines')).toBe('+0')
+  expect(after(await texts(band), 'session code')).toBe('+0')
   await $.tool.call({ tool: 'Edit', file_path: '/a.ts', old_string: 'old', new_string: 'new' })
   await $.tool.call({ tool: 'Write', file_path: '/b.ts', content: 'x\ny\n' })
   fails = true
   await $.tool.call({ tool: 'Edit', file_path: '/a.ts', old_string: 'x', new_string: 'y' })
-  expect(after(await texts(band), 'lines')).toBe('+4')
+  expect(after(await texts(band), 'session code')).toBe('+4')
   expect(await texts(band)).toContain(' −1')
   await band.unmount()
 
@@ -107,7 +107,7 @@ test('lines made before the inspector loaded are counted from the transcript, su
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   await clock.settle()
   const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
-  expect(after(await texts(band), 'lines')).toBe('+6')
+  expect(after(await texts(band), 'session code')).toBe('+6')
   expect(await texts(band)).toContain(' −2')
   await band.unmount()
 })

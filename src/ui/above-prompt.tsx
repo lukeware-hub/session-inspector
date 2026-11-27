@@ -62,7 +62,7 @@ function sessionRow(state: InspectorState, now: number): GridRow {
       usage.costUsd === undefined ? missing('cost') : { label: 'cost', text: formatUsd(usage.costUsd) },
       // Lines Edit and Write changed, as /usage counts them; the git count is in the pane's Files tab.
       {
-        label: 'lines',
+        label: 'session code',
         text: `+${usage.linesAdded ?? 0}`,
         color: 'diffAdded',
         more: [{ text: ` −${usage.linesRemoved ?? 0}`, color: 'diffRemoved' }],
