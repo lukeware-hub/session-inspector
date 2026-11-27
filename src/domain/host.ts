@@ -13,7 +13,7 @@ export const WINDOWS_PROCESS_COMMAND = [
   '-NoProfile',
   '-NonInteractive',
   '-Command',
-  "$PID; Get-CimInstance Win32_Process | ForEach-Object { '{0} {1} {2} {3} {4}' -f $_.ProcessId, $_.ParentProcessId, $_.WorkingSetSize, ($_.KernelModeTime + $_.UserModeTime), $_.Name }",
+  "$PID; Get-CimInstance Win32_Process | ForEach-Object { '{0} {1} {2} {3} {4}' -f $_.ProcessId, $_.ParentProcessId, [uint64]$_.WorkingSetSize, ([uint64]$_.KernelModeTime + [uint64]$_.UserModeTime), $_.Name }",
 ] as const
 
 // macOS and Linux: the sampling shell's own id, then one "pid ppid rssKiB cputime name" row per process.

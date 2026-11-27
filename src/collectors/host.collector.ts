@@ -22,14 +22,27 @@ async function run($: Engine, argv: readonly string[]): Promise<string | undefin
   return done.exitCode === 0 ? done.stdout : undefined
 }
 
-// Remembers the commit the session started on, so line counts cover this session.
+// Remembers the commit the session started on and what was already changed on top of it,
+// so line counts cover this session and not work that was there before.
 export async function captureGitBase($: Engine): Promise<void> {
   const repo = await $.session.repo()
   const head = repo ? (await run($, ['git', 'rev-parse', 'HEAD']))?.trim() : undefined
-  await changeGit($, () => ({ isRepo: Boolean(repo), baseRef: head || undefined, added: 0, removed: 0, files: 0 }))
+  const before = head ? await run($, ['git', 'diff', '--numstat', head]) : undefined
+  const base = before === undefined ? undefined : parseNumstat(before)
+  await changeGit($, () => ({
+    isRepo: Boolean(repo),
+    baseRef: head || undefined,
+    baseAdded: base?.added,
+    baseRemoved: base?.removed,
+    baseFiles: base?.files,
+    added: 0,
+    removed: 0,
+    files: 0,
+  }))
 }
 
-// Lines added and removed since the session's first commit, committed or not.
+// Lines added and removed in tracked files since the session began, committed or not.
+// Untracked files are not in `git diff`, so they are not counted.
 export async function refreshGit($: Engine): Promise<void> {
   const git = await readGit($)
   if (!git.isRepo || !git.baseRef) return
@@ -37,7 +50,12 @@ export async function refreshGit($: Engine): Promise<void> {
   if (output === undefined) return
   const stat = parseNumstat(output)
   const at = await $.clock.now()
-  await changeGit($, current => ({ ...current, ...stat, checkedAt: at }))
+  const own = {
+    added: Math.max(0, stat.added - (git.baseAdded ?? 0)),
+    removed: Math.max(0, stat.removed - (git.baseRemoved ?? 0)),
+    files: Math.max(0, stat.files - (git.baseFiles ?? 0)),
+  }
+  await changeGit($, current => ({ ...current, ...own, checkedAt: at }))
 }
 
 // CPU and memory of the Claude Code process tree, at most once every ten seconds.

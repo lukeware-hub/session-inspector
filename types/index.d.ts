@@ -116,6 +116,10 @@ export type FileRecord = { path: string; reads: number; edits: number; lastAt: n
 export type GitRecord = {
   isRepo: boolean
   baseRef?: string
+  // Lines already changed, uncommitted, when the session began; not this session's work.
+  baseAdded?: number
+  baseRemoved?: number
+  baseFiles?: number
   added: number
   removed: number
   files: number
