@@ -31,3 +31,16 @@ export function toolLines(tool: string, result: unknown): CodeLines | undefined 
   }
   return counted
 }
+
+type ToolUse = { tool: string; result?: unknown; isError?: true }
+
+// The lines every answered Edit and Write of a conversation changed, as /usage sums them.
+export function conversationLines(uses: readonly ToolUse[]): CodeLines {
+  const counted = { added: 0, removed: 0 }
+  for (const use of uses) {
+    const lines = use.isError ? undefined : toolLines(use.tool, use.result)
+    counted.added += lines?.added ?? 0
+    counted.removed += lines?.removed ?? 0
+  }
+  return counted
+}
