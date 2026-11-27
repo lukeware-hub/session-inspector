@@ -2,6 +2,16 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- On the Claude desktop app the card borders use the theme's plain text color instead of the dimmed one, so they read on the dark band.
+
+### Fixed
+
+- On the Claude desktop app a value too long for its card ran into the next one (`8%tokens`) or past the right edge; cards now clip their content, and the band drops to two columns, then one, when four cards would not fit what they hold.
+
 ## [0.4.3] - 2026-11-27
 
 ### Changed
