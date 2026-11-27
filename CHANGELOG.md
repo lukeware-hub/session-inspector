@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.9] - 2026-11-27
+
+### Fixed
+
+- After an install or reload mid-session, `lines` showed `+0 −0` while /usage counted every edit of the session. When it loads, the inspector now sums the lines Edit and Write changed from the transcript, subagents included.
+
 ## [0.4.8] - 2026-11-27
 
 ### Changed
