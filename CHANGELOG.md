@@ -2,6 +2,17 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.7] - 2026-11-27
+
+### Changed
+
+- The band's `lines` and the Overview's "Lines changed" count the lines the Edit and Write tools changed, as /usage does, and update with each edit. The git count stays in the Files tab as "Lines changed (git)".
+- The account's rate-limit windows are read every ten seconds instead of every minute.
+
+### Fixed
+
+- The cost now follows the session total every ten seconds, other mods' model calls included, instead of waiting for the next model response ($5.09 against $5.12 in /usage).
+
 ## [0.4.6] - 2026-11-27
 
 ### Fixed
