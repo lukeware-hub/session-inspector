@@ -105,11 +105,70 @@ export function cardColumns(room: number): 1 | 2 | 4 {
   return 1
 }
 
-// Each card costs three lines (its top border, the figure, its bottom border), so the terminal draws cards only when the band has room for every row.
-export const CARD_ROW_LINES = 3
+// The terminal table takes two lines a row and one more for its bottom line; with the title and the frame it needs this much room.
+export function tableFits(maxRows: number, rowCount: number): boolean {
+  return maxRows >= 3 + 2 * rowCount + 1
+}
 
-export function cardsFit(maxRows: number, rowCount: number): boolean {
-  return maxRows >= 3 + rowCount * CARD_ROW_LINES
+// Lays rows out as one table whose neighbouring cells share a single line (╭┬╮ ├┼┤ ╰┴╯): column N has one width in every
+// row, the spare room widens the columns so the table ends on the band's right edge, whole columns leave from the right
+// when the room runs out, and optional figures leave first on a narrow band. A span row is one cell across the table.
+// Border lines carry a blank row label; each content line carries its row's name.
+export function tableLines(rows: readonly GridRow[], columns: number, labelWidth: number): Part[][] {
+  const room = Math.max(1, columns - labelWidth)
+  const isNarrow = columns < NARROW_COLUMNS
+  const kept = rows.map(row => (row.span ? row : { ...row, cells: row.cells.filter(cell => !(isNarrow && cell.optional)) }))
+  const count = Math.max(1, ...kept.map(row => (row.span ? 0 : row.cells.length)))
+  // A cell holds a space, its label and a space, its value, and a space; the value sits right after its own label.
+  const cellWidth = (cell: Segment) => (cell.label ? cell.label.length + 1 : 0) + valueWidth(cell)
+  const content = Array.from({ length: count }, (_, column) => columnMax(kept, column, cellWidth) + 2)
+  const natural = (keep: number) => content.slice(0, keep).reduce((sum, width) => sum + width, 0) + keep + 1
+  let keep = count
+  while (keep > 1 && natural(keep) > room) keep--
+  const spare = Math.max(0, room - natural(keep))
+  const widths = content.slice(0, keep).map((width, column) => width + Math.floor(spare / keep) + (column < spare % keep ? 1 : 0))
+  const inner = widths.reduce((sum, width) => sum + width, 0) + keep - 1
+  const blank = ' '.repeat(labelWidth)
+
+  const border = (left: string, right: string, above?: GridRow, below?: GridRow): Part[] => {
+    const hasUp = above !== undefined && !above.span
+    const hasDown = below !== undefined && !below.span
+    const join = hasUp && hasDown ? '┼' : hasUp ? '┴' : hasDown ? '┬' : '─'
+    return [{ text: blank }, { text: left + widths.map(width => '─'.repeat(width)).join(join) + right, dim: true }]
+  }
+
+  const contentLine = (row: GridRow): Part[] => {
+    const line: Part[] = [{ text: row.label.padEnd(labelWidth), dim: true }, { text: '│', dim: true }]
+    if (row.span) {
+      line.push({ ...row.span, text: ` ${fit(row.span.text, Math.max(1, inner - 2)).padEnd(inner - 2)} ` }, { text: '│', dim: true })
+      return line
+    }
+    widths.forEach((width, column) => {
+      const cell = row.cells[column]
+      if (!cell) {
+        line.push({ text: ' '.repeat(width) })
+      } else {
+        const label = cell.label ? cell.label.length + 1 : 0
+        const room_ = width - 2 - label
+        const text = fit(cell.text, Math.max(1, room_))
+        const more = text === cell.text ? (cell.more ?? []) : []
+        const used = text.length + more.reduce((sum, part) => sum + part.text.length, 0)
+        line.push({ text: ' ' })
+        if (cell.label) line.push({ text: `${cell.label} `, dim: true })
+        line.push({ text, color: cell.color, bold: cell.bold, dim: cell.dim }, ...more, { text: ' '.repeat(Math.max(0, room_ - used) + 1) })
+      }
+      line.push({ text: '│', dim: true })
+    })
+    return line
+  }
+
+  const lines: Part[][] = [border('╭', '╮', undefined, kept[0])]
+  kept.forEach((row, index) => {
+    lines.push(contentLine(row))
+    const next = kept[index + 1]
+    lines.push(next ? border('├', '┤', row, next) : border('╰', '╯', row, undefined))
+  })
+  return lines
 }
 
 // One figure as a card, label and value on one line; a watch or danger value colors the border too.
@@ -136,12 +195,11 @@ function card(ui: Ui, cell: Segment | undefined, width: number | string) {
 
 // The band as rows of cards packed edge to edge, no gaps: a narrow dim label column, then the figures in a grid whose
 // columns line up in every row (empty slots hold the place), wrapping to fewer columns as the room shrinks.
-// The terminal sizes cards in whole cells so four always fit across; the desktop shares the width in percent.
-export function cardRows(ui: Ui, rows: readonly GridRow[], columns: number, labelWidth: number, isCells = false) {
+export function cardRows(ui: Ui, rows: readonly GridRow[], columns: number, labelWidth: number) {
   const { Box, Text } = ui
   const room = Math.max(1, columns - labelWidth)
   const across = cardColumns(room)
-  const width = isCells ? Math.max(1, Math.floor(room / across)) : `${100 / across}%`
+  const width = `${100 / across}%`
   const isNarrow = columns < NARROW_COLUMNS
   return rows.map(row => {
     const cells = row.cells.filter(cell => !(isNarrow && cell.optional))

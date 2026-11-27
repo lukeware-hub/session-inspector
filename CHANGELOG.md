@@ -2,6 +2,13 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- On the terminal the band is one table whose neighbouring cells share a single line (╭┬╮ ├┼┤ ╰┴╯), so the cells sit edge to edge with no gaps and four rows take nine lines instead of twelve. Its columns line up in every row and widen to the band's right edge.
+- A terminal without room for the table keeps the one-line text grid. The desktop keeps its cards.
+
 ## [0.4.1] - 2026-11-27
 
 ### Changed
