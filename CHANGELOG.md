@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.8] - 2026-11-27
+
+### Changed
+
+- The cost and the account's rate-limit windows refresh in two ways: every ten seconds, and at once whenever Claude finishes a response.
+
 ## [0.4.7] - 2026-11-27
 
 ### Changed
