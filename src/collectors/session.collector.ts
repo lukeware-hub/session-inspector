@@ -13,6 +13,7 @@ import {
   touchSession,
   type Engine,
 } from '../state/repository'
+import { refreshAccountUsage, refreshLiveUsage } from './account-usage.collector'
 import { syncAgents } from './agents.collector'
 import { captureGitBase, inBackground, refreshGit, sampleSystem } from './host.collector'
 import { refreshPressure } from './insights.collector'
@@ -66,6 +67,9 @@ export function registerSessionCollector(on: On): void {
       inBackground(sampleSystem($))
       inBackground(syncAgents($))
       inBackground(refreshGit($))
+      // A response moves the cost and the limits: read them now as well as on the ten-second timers.
+      inBackground(refreshLiveUsage($))
+      inBackground(refreshAccountUsage($))
       inBackground(refreshPressure($))
     } else {
       const status = agentStatusFromReason(e.reason)

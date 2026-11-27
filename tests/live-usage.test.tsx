@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import { patchLines, toolLines } from '../src/domain/code-lines'
-import { BAND, PANE, SESSION_ID, stubEngine } from './engine-stubs'
+import { BAND, PANE, SESSION_ID, USAGE, stubEngine } from './engine-stubs'
 
 async function texts(view: { findAll: (query: { type: 'Text' }) => Promise<{ text: string }[]> }): Promise<string[]> {
   return (await view.findAll({ type: 'Text' })).map(found => found.text)
@@ -57,5 +57,28 @@ test('the cost follows the session total every ten seconds, mods’ model calls 
   expect(after(await texts(band), 'cost')).toBe('$5.09')
   await clock.advance(1)
   expect(after(await texts(band), 'cost')).toBe('$5.12')
+  await band.unmount()
+})
+
+test('cost and account limits also refresh when Claude finishes a response, without waiting for the timer', async ($, on) => {
+  const session = { id: SESSION_ID, costUsd: 1 }
+  const usage = { fiveHour: 3 }
+  const { clock } = stubEngine(on, session)
+  on('session.authorize', () => ({ value: { handle: 'h', kind: 'bearer' as const } }))
+  on('http.fetch', () => ({
+    value: { status: 200, ok: true, headers: {}, text: JSON.stringify({ five_hour: { utilization: usage.fiveHour, resets_at: '2099-01-01T00:00:00+00:00' } }) },
+  }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await clock.settle()
+  const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(after(await texts(band), 'cost')).toBe('$1.00')
+
+  session.costUsd = 2
+  usage.fiveHour = 9
+  await $.turn.start({ text: 'hi', turnId: 't1' })
+  await $.turn.complete({ answer: 'ok', durationMs: 10, isAborted: false, turnId: 't1', reason: 'answer', usage: USAGE })
+  await clock.settle()
+  expect(after(await texts(band), 'cost')).toBe('$2.00')
+  expect((await texts(band)).join('')).toContain('9%')
   await band.unmount()
 })
