@@ -1,6 +1,6 @@
 {
   "name": "session-inspector",
-  "version": "0.4.10",
+  "version": "0.4.11",
   "description": "Native Developer Observability Dashboard for Claude Code: context, session, activity, tools and agents of the current session.",
   "author": {
     "name": "lukeware-hub"
