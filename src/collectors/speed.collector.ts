@@ -21,10 +21,14 @@ export function registerSpeedCollector(on: On): void {
 
   on('session.compact', async ($, e, next) => {
     const result = await next(e)
-    if (result.skip === undefined) {
-      const at = await $.clock.now()
-      await changeStats($, stats => recordCompaction(stats, at, e.trigger))
-      await logEvent($, { type: 'context.compact', label: `Context compacted (${e.trigger})`, timestamp: at, agentId: e.agentId })
+    try {
+      if (result.skip === undefined) {
+        const at = await $.clock.now()
+        await changeStats($, stats => recordCompaction(stats, at, e.trigger))
+        await logEvent($, { type: 'context.compact', label: `Context compacted (${e.trigger})`, timestamp: at, agentId: e.agentId })
+      }
+    } catch {
+      // Recording is best effort; a failure here must not reach `.catch`, which would compact again.
     }
     return result
   }).catch(($, e, next) => next(e))

@@ -78,7 +78,7 @@ function overview({ ui, state, now, columns }: View) {
       {field(ui, 'Cost (estimate)', formatUsd(usage.costUsd), columns)}
       {field(ui, 'Session code', `+${usage.linesAdded ?? 0}  −${usage.linesRemoved ?? 0}`, columns)}
       {field(ui, 'Speed', speed.tokensPerSecond === undefined ? '—' : `${speed.tokensPerSecond} tokens/s`, columns)}
-      {field(ui, 'CPU and memory', system.memoryBytes === undefined ? '—' : `${system.cpuPercent ?? '—'}%  ${formatBytes(system.memoryBytes)}`, columns)}
+      {field(ui, 'CPU and memory', system.memoryBytes === undefined ? '—' : `${system.cpuPercent === undefined ? '—' : `${system.cpuPercent}%`}  ${formatBytes(system.memoryBytes)}`, columns)}
       {field(ui, 'Session duration', formatDuration(sessionDurationMs(session, now)), columns)}
       {field(ui, 'Last activity', formatClock(session.lastActivity), columns)}
       {field(ui, 'Events', String(state.activity.total), columns)}

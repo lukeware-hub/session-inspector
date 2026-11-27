@@ -165,7 +165,8 @@ export async function resetState($: Engine): Promise<void> {
     update($, statsState, () => EMPTY_STATS),
     update($, toolsState, () => []),
     update($, agentsState, () => []),
-    update($, usageState, () => EMPTY_USAGE),
+    // The account's rate-limit windows belong to the account, so a new session keeps them.
+    update($, usageState, current => ({ ...EMPTY_USAGE, rateLimits: current.rateLimits })),
     update($, filesState, () => []),
     update($, gitState, () => EMPTY_GIT),
     update($, speedState, () => EMPTY_SPEED),

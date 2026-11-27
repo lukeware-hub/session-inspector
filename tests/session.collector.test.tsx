@@ -43,11 +43,34 @@ test('turns count, tokens add up and the status follows the turn', async ($, on)
   expect(STARTED_AT).toBeGreaterThan(0)
 })
 
+// The first numstat read is the session's baseline: nothing was changed yet.
+let numstatReads = 0
+function isBaseline(_argv: readonly string[]): boolean {
+  numstatReads += 1
+  return numstatReads === 1
+}
+
+test('git lines already changed before the session are not counted', async ($, on) => {
+  let reads = 0
+  stubEngine(on, {
+    id: SESSION_ID,
+    host: { git: argv => (argv[1] === 'rev-parse' ? 'abc123\n' : ++reads === 1 ? '5\t1\told.ts\n' : '12\t3\told.ts\n1\t0\tnew.ts\n') },
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.turn.start({ text: 'hi', turnId: 't1' })
+  await $.turn.complete(complete('t1'))
+  await $.command.run({ command: 'inspector', args: 'files', origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 120 } })
+  const pane = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await pane.find({ type: 'Text', text: /^\+8 {2}−2$/ })).toBeTruthy()
+  expect(await pane.find({ type: 'Text', text: /^1 since the session began$/ })).toBeTruthy()
+  await pane.unmount()
+})
+
 test('git lines and process resources are measured from the host', async ($, on) => {
   const { ran } = stubEngine(on, {
     id: SESSION_ID,
     host: {
-      git: argv => (argv[1] === 'rev-parse' ? 'abc123\n' : '12\t3\tsrc/a.ts\n1\t0\tREADME.md\n'),
+      git: argv => (argv[1] === 'rev-parse' ? 'abc123\n' : isBaseline(argv) ? '' : '12\t3\tsrc/a.ts\n1\t0\tREADME.md\n'),
       '/bin/sh': '50\n10 1 524288 00:00:02 claude\n50 10 100 00:00:00 sh\n',
     },
   })
@@ -102,5 +125,18 @@ test('a new session id after /clear starts the values over', async ($, on) => {
   expect(await pane.find({ type: 'Text', text: /^running$/ })).toBeTruthy()
   await pane.press({ key: 'tab-tools' })
   expect(await pane.find({ type: 'Text', text: /No tool calls yet/ })).toBeTruthy()
+  await pane.unmount()
+})
+
+test('a new session id keeps the account rate limits', async ($, on) => {
+  const session = { id: 'first' }
+  stubEngine(on, session)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.session.measure({ context: { tokens: 10_000, window: 200_000 }, rateLimits: [{ kind: 'five_hour', percentUsed: 42 }], changed: ['rateLimits'] })
+  session.id = 'second'
+  await $.turn.start({ text: 'fresh', turnId: 't1' })
+
+  const pane = await sessionsPane($)
+  expect(await pane.find({ type: 'Text', text: /42%/ })).toBeTruthy()
   await pane.unmount()
 })

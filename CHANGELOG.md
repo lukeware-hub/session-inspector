@@ -2,6 +2,16 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- The git line count (Files tab) no longer includes changes that were already there, uncommitted, when the session began. It still covers tracked files only.
+- A failure while recording a tool call, a subagent start or a compaction can no longer make the engine repeat it.
+- `/clear` no longer empties the account's rate-limit windows until the next poll.
+- On Windows, processes with no memory or CPU reading no longer drop out of the CPU and RAM sample.
+- Overview shows `—` instead of `—%` while CPU is not measured yet.
+
 ## [0.4.10] - 2026-11-27
 
 ### Changed

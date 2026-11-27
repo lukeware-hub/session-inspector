@@ -11,7 +11,7 @@ import {
   type ToolOutcome,
 } from '../domain/reducers'
 import { toolLines } from '../domain/code-lines'
-import { changeAgents, changeFiles, changeStats, changeTools, changeUsage, logEvent, touchSession } from '../state/repository'
+import { changeAgents, changeFiles, changeStats, changeTools, changeUsage, logEvent, touchSession, type Engine } from '../state/repository'
 import { recordCallInsights } from './insights.collector'
 
 const FILE_TOUCH: Record<string, FileTouch> = {
@@ -45,20 +45,39 @@ export function registerToolsCollector(on: On): void {
     await logEvent($, { type: 'tool.call', label: name, timestamp: at, toolName: name, agentId })
 
     const ran = await next(e)
-    const end = await $.clock.now()
-    const outcome: ToolOutcome = ran.deny !== undefined ? 'denied' : ran.isError === true ? 'error' : 'ok'
-    await changeTools($, tools => finishTool(tools, name, end - at, outcome))
-    if (outcome === 'denied') await logEvent($, { type: 'tool.denied', label: `${name} denied`, timestamp: end, toolName: name, agentId })
-    if (outcome === 'error') await logEvent($, { type: 'tool.error', label: `${name} failed`, timestamp: end, toolName: name, agentId })
-    const lines = outcome === 'ok' ? toolLines(name, ran.result) : undefined
-    if (lines && (lines.added || lines.removed)) {
-      await changeUsage($, usage => ({
-        ...usage,
-        linesAdded: (usage.linesAdded ?? 0) + lines.added,
-        linesRemoved: (usage.linesRemoved ?? 0) + lines.removed,
-      }))
+    // The call has run: a failure while recording it must not reach `.catch`, which would run the call again.
+    try {
+      await recordFinished($, ran, name, at, path, e, agentId)
+    } catch {
+      // Metrics are best effort; the engine's answer goes on unchanged.
     }
-    await recordCallInsights($,{ tool: name, input: e, file: path, resultText: ran.text, failed: outcome !== 'ok', agentId, at: end })
     return ran
   }).catch(($, e, next) => next(e))
+}
+
+type Ran = { deny?: unknown; isError?: boolean; result?: unknown; text?: string }
+
+async function recordFinished(
+  $: Engine,
+  ran: Ran,
+  name: string,
+  at: number,
+  path: string | undefined,
+  input: Record<string, unknown>,
+  agentId: string | undefined,
+): Promise<void> {
+  const end = await $.clock.now()
+  const outcome: ToolOutcome = ran.deny !== undefined ? 'denied' : ran.isError === true ? 'error' : 'ok'
+  await changeTools($, tools => finishTool(tools, name, end - at, outcome))
+  if (outcome === 'denied') await logEvent($, { type: 'tool.denied', label: `${name} denied`, timestamp: end, toolName: name, agentId })
+  if (outcome === 'error') await logEvent($, { type: 'tool.error', label: `${name} failed`, timestamp: end, toolName: name, agentId })
+  const lines = outcome === 'ok' ? toolLines(name, ran.result) : undefined
+  if (lines && (lines.added || lines.removed)) {
+    await changeUsage($, usage => ({
+      ...usage,
+      linesAdded: (usage.linesAdded ?? 0) + lines.added,
+      linesRemoved: (usage.linesRemoved ?? 0) + lines.removed,
+    }))
+  }
+  await recordCallInsights($, { tool: name, input, file: path, resultText: ran.text, failed: outcome !== 'ok', agentId, at: end })
 }
