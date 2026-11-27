@@ -48,7 +48,8 @@ export function meter(percent: number, cells = 10): string {
 export type Part = { text: string; color?: ThemeKey; bold?: boolean; dim?: boolean }
 
 // One figure: an optional dim label, its value, and any further painted parts of the value (`+37` then ` −2`).
-export type Segment = Part & { label?: string; more?: Part[] }
+// `optional` figures are the first to leave when the room is short.
+export type Segment = Part & { label?: string; more?: Part[]; optional?: boolean }
 
 // One band row: its name, then one figure per grid column, or one message across the whole row.
 export type GridRow = { label: string; cells: Segment[]; span?: Segment }
@@ -92,6 +93,46 @@ export function layoutGrid(rows: readonly GridRow[], columns: number, labelWidth
     })
     return line
   })
+}
+
+// Below this many cells of width the desktop band keeps only the figures that are not optional.
+export const NARROW_COLUMNS = 72
+
+// The desktop draws a proportional font, so cells cannot be counted into columns: each row is a label and
+// its figures as blocks that wrap onto the next line when the room runs out, never cut or misaligned.
+export function flowRows(ui: Ui, rows: readonly GridRow[], columns: number, labelWidth: number) {
+  const { Box, Text } = ui
+  const isNarrow = columns < NARROW_COLUMNS
+  return rows.map(row => (
+    <Box flexDirection="row" columnGap={1}>
+      <Box width={labelWidth} flexShrink={0}>
+        <Text dimColor>{row.label}</Text>
+      </Box>
+      <Box flexDirection="row" flexWrap="wrap" columnGap={3} flexGrow={1} flexShrink={1}>
+        {row.span ? (
+          <Text color={row.span.color} bold={row.span.bold} dimColor={row.span.dim} wrap="wrap">
+            {row.span.text}
+          </Text>
+        ) : (
+          row.cells
+            .filter(cell => !(isNarrow && cell.optional))
+            .map(cell => (
+              <Box flexDirection="row" columnGap={1} flexShrink={0}>
+                {cell.label && <Text dimColor>{cell.label}</Text>}
+                <Text color={cell.color} bold={cell.bold} dimColor={cell.dim}>
+                  {cell.text}
+                </Text>
+                {(cell.more ?? []).map(part => (
+                  <Text color={part.color} bold={part.bold} dimColor={part.dim}>
+                    {part.text.trim()}
+                  </Text>
+                ))}
+              </Box>
+            ))
+        )}
+      </Box>
+    </Box>
+  ))
 }
 
 // One laid-out line as a row of painted texts.
