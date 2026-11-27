@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.6] - 2026-11-27
+
+### Fixed
+
+- The rate-limit windows now match the /usage tab: the inspector reads the account usage at session start and every minute, so usage from other sessions and devices shows too. Before, it only took the figures from model responses and lagged behind (2% and 38% against 3% and 39%). Off a subscription sign-in the response figures stay.
+
 ## [0.4.5] - 2026-11-27
 
 ### Fixed
