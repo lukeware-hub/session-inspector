@@ -76,7 +76,7 @@ function overview({ ui, state, now, columns }: View) {
       {field(ui, 'Tool calls', String(stats.totalToolCalls), columns)}
       {field(ui, 'Subagents', `${agents.length} started, ${running} running, ${stats.totalSubagentTurns} turns`, columns)}
       {field(ui, 'Cost (estimate)', formatUsd(usage.costUsd), columns)}
-      {field(ui, 'Lines changed', `+${usage.linesAdded ?? 0}  −${usage.linesRemoved ?? 0}`, columns)}
+      {field(ui, 'Session code', `+${usage.linesAdded ?? 0}  −${usage.linesRemoved ?? 0}`, columns)}
       {field(ui, 'Speed', speed.tokensPerSecond === undefined ? '—' : `${speed.tokensPerSecond} tokens/s`, columns)}
       {field(ui, 'CPU and memory', system.memoryBytes === undefined ? '—' : `${system.cpuPercent ?? '—'}%  ${formatBytes(system.memoryBytes)}`, columns)}
       {field(ui, 'Session duration', formatDuration(sessionDurationMs(session, now)), columns)}
@@ -253,7 +253,7 @@ function files({ ui, state, columns }: View) {
   const list = [...state.files].sort((a, b) => b.lastAt - a.lastAt)
   return (
     <Box flexDirection="column">
-      {field(ui, 'Lines changed (git)', git.isRepo ? (git.checkedAt === undefined ? 'counted after the next turn' : `+${git.added}  −${git.removed}`) : 'not a git repository', columns)}
+      {field(ui, 'Code changed (git)', git.isRepo ? (git.checkedAt === undefined ? 'counted after the next turn' : `+${git.added}  −${git.removed}`) : 'not a git repository', columns)}
       {git.isRepo && git.checkedAt !== undefined && field(ui, 'Files changed', `${git.files} since the session began`, columns)}
       {heading(ui, 'Files touched by tools')}
       {list.length === 0 && empty(ui, 'No file read or edited yet.')}
