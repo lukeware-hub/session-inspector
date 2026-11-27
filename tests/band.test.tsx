@@ -121,7 +121,7 @@ test('model speed is measured per request', async ($, on) => {
 test('the desktop band keeps every row and drops the optional figures when narrow', async ($, on) => {
   stubEngine(on)
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
-  await $.session.measure({ context: { tokens: 90_000, window: 1_000_000 }, cost: { usd: 1 }, changed: ['context', 'cost'] })
+  await $.session.measure({ context: { tokens: 90_000, window: 1_000_000 }, cost: { usd: 1 }, rateLimits: [], changed: ['context', 'cost', 'rateLimits'] })
   const wide = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 5, bodyColumns: 120 }, surface: 'desktop' })
   const wideTexts = (await wide.findAll({ type: 'Text' })).map(found => found.text.trim())
   for (const label of ['Context', 'Session', 'Limits', 'forecast', 'lines']) expect(wideTexts).toContain(label)
@@ -131,4 +131,28 @@ test('the desktop band keeps every row and drops the optional figures when narro
   for (const label of ['Context', 'Limits', 'time', 'cost']) expect(narrowTexts).toContain(label)
   for (const label of ['forecast', 'lines']) expect(narrowTexts).not.toContain(label)
   await narrow.unmount()
+})
+
+test('cards: a tall terminal and the desktop draw bordered cards, a short terminal keeps the text grid', async ($, on) => {
+  stubEngine(on)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.session.measure({ context: { tokens: 90_000, window: 1_000_000 }, cost: { usd: 1 }, rateLimits: [], changed: ['context', 'cost', 'rateLimits'] })
+  const count = async (surface: 'terminal' | 'desktop', maxRows: number, bodyColumns = 140) => {
+    const band = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows, bodyColumns }, surface })
+    const cards = (await band.findAll({ type: 'Box' })).filter(found => found.props.width === '25%')
+    await band.unmount()
+    return cards.length
+  }
+  expect(await count('terminal', 20)).toBeGreaterThanOrEqual(12)
+  expect(await count('desktop', 5)).toBeGreaterThanOrEqual(12)
+  expect(await count('terminal', 8)).toBe(0)
+})
+
+test('cards: every row holds the same number of slots, so the columns line up', async ($, on) => {
+  stubEngine(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const band = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows: 5, bodyColumns: 140 }, surface: 'desktop' })
+  const widths = (await band.findAll({ type: 'Box' })).map(found => found.props.width).filter(width => width === '25%')
+  expect(widths.length % 4).toBe(0)
+  await band.unmount()
 })

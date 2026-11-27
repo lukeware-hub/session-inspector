@@ -2,6 +2,14 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- The band draws its figures as equal bordered cards (label on top, value below) in four columns that line up in every row, with the row names in a narrow column on the left; the columns drop to two and then one as the room shrinks.
+- The Claude desktop app always draws cards. The terminal draws them when the band has room for every row (three lines a row) and keeps the text grid otherwise.
+- A figure at watch or danger level also colors its card border.
+
 ## [0.3.3] - 2026-11-27
 
 ### Fixed

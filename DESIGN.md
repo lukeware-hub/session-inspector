@@ -38,3 +38,4 @@ Session Inspector is an Operate surface drawn in a terminal: the person is in a 
 
 - Sentence case, the product's own words: "Context", "Tokens in context", "Session total", "Cost (estimate)".
 - Missing values are `—`.
+- **Cards** (desktop always, terminal when every row fits at three lines a row): each figure is a round dim-bordered card, its label dim on top and its value below; the cards sit in four columns (two, then one, as the room shrinks) that line up in every row, with the row names in a narrow column to the left. A figure at watch or danger level colors its border too.
