@@ -9,7 +9,7 @@
       "name": "session-inspector",
       "source": "./",
       "description": "Native Developer Observability Dashboard for Claude Code: context, session, activity, tools and agents of the current session.",
-      "version": "0.3.3"
+      "version": "0.4.0"
     }
   ]
 }
