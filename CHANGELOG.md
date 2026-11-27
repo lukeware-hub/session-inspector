@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.5] - 2026-11-27
+
+### Fixed
+
+- A rate-limit window whose reset time has passed now reads 0% in the band and the detail pane. Readings only arrive with model responses, so an idle session kept showing the old figure (for example 100%) after the window had reset.
+
 ## [0.4.4] - 2026-11-27
 
 ### Changed
