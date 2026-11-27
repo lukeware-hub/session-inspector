@@ -139,7 +139,7 @@ test('cards: a tall terminal and the desktop draw bordered cards, a short termin
   await $.session.measure({ context: { tokens: 90_000, window: 1_000_000 }, cost: { usd: 1 }, rateLimits: [], changed: ['context', 'cost', 'rateLimits'] })
   const count = async (surface: 'terminal' | 'desktop', maxRows: number, bodyColumns = 140) => {
     const band = await $.ui.mount({ ...BAND, props: { ...BAND.props, maxRows, bodyColumns }, surface })
-    const cards = (await band.findAll({ type: 'Box' })).filter(found => found.props.width === '25%')
+    const cards = (await band.findAll({ type: 'Box' })).filter(found => found.props.width === '25%' || found.props.width === Math.floor((bodyColumns - 4 - 9) / 4))
     await band.unmount()
     return cards.length
   }

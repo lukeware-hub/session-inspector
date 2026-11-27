@@ -2,6 +2,16 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- The cards are packed edge to edge with no gaps, and each shows its label and value on one line, so a row of cards takes three lines instead of four.
+
+### Fixed
+
+- On the terminal the cards wrapped to three columns with the fourth alone below; they are now sized in whole cells, so four fit across.
+
 ## [0.4.0] - 2026-11-27
 
 ### Changed

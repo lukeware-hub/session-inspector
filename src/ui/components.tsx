@@ -105,27 +105,27 @@ export function cardColumns(room: number): 1 | 2 | 4 {
   return 1
 }
 
-// Each card costs three lines (border, label, value), so the terminal draws cards only when the band has room for every row.
+// Each card costs three lines (its top border, the figure, its bottom border), so the terminal draws cards only when the band has room for every row.
 export const CARD_ROW_LINES = 3
 
 export function cardsFit(maxRows: number, rowCount: number): boolean {
   return maxRows >= 3 + rowCount * CARD_ROW_LINES
 }
 
-// One figure as a card: its dim label on top, its value below; a watch or danger value colors the border too.
-function card(ui: Ui, cell: Segment | undefined, width: string) {
+// One figure as a card, label and value on one line; a watch or danger value colors the border too.
+function card(ui: Ui, cell: Segment | undefined, width: number | string) {
   const { Box, Text } = ui
   if (!cell) return <Box width={width} flexShrink={0} />
   const isAlert = cell.color === 'warning' || cell.color === 'error'
   return (
-    <Box width={width} flexShrink={0} flexDirection="column" borderStyle="round" borderColor={isAlert ? cell.color : undefined} borderDimColor={!isAlert} paddingX={1}>
-      <Text dimColor>{cell.label ?? ' '}</Text>
-      <Box flexDirection="row">
-        <Text color={cell.color} bold={cell.bold} dimColor={cell.dim}>
+    <Box width={width} flexShrink={0} flexDirection="row" columnGap={1} borderStyle="round" borderColor={isAlert ? cell.color : undefined} borderDimColor={!isAlert} paddingX={1} paddingY={0}>
+      {cell.label && <Text dimColor>{cell.label}</Text>}
+      <Box flexDirection="row" flexShrink={1}>
+        <Text color={cell.color} bold={cell.bold} dimColor={cell.dim} wrap="truncate-end">
           {cell.text}
         </Text>
         {(cell.more ?? []).map(part => (
-          <Text color={part.color} bold={part.bold} dimColor={part.dim}>
+          <Text color={part.color} bold={part.bold} dimColor={part.dim} wrap="truncate-end">
             {part.text}
           </Text>
         ))}
@@ -134,24 +134,25 @@ function card(ui: Ui, cell: Segment | undefined, width: string) {
   )
 }
 
-// The band as rows of equal cards: a narrow dim label column, then the figures as cards in a grid whose columns line up
-// in every row (empty slots hold the place), wrapping to fewer columns as the room shrinks. Spans stay one line of text.
-export function cardRows(ui: Ui, rows: readonly GridRow[], columns: number, labelWidth: number) {
+// The band as rows of cards packed edge to edge, no gaps: a narrow dim label column, then the figures in a grid whose
+// columns line up in every row (empty slots hold the place), wrapping to fewer columns as the room shrinks.
+// The terminal sizes cards in whole cells so four always fit across; the desktop shares the width in percent.
+export function cardRows(ui: Ui, rows: readonly GridRow[], columns: number, labelWidth: number, isCells = false) {
   const { Box, Text } = ui
   const room = Math.max(1, columns - labelWidth)
   const across = cardColumns(room)
-  const width = `${100 / across}%`
+  const width = isCells ? Math.max(1, Math.floor(room / across)) : `${100 / across}%`
   const isNarrow = columns < NARROW_COLUMNS
   return rows.map(row => {
     const cells = row.cells.filter(cell => !(isNarrow && cell.optional))
     const slots = Math.max(cells.length, 1)
     const padded = across === 1 ? slots : Math.ceil(slots / across) * across
     return (
-      <Box flexDirection="row">
+      <Box flexDirection="row" alignItems="center" gap={0}>
         <Box width={labelWidth} flexShrink={0}>
           <Text dimColor>{row.label}</Text>
         </Box>
-        <Box flexDirection="row" flexWrap="wrap" flexGrow={1} flexShrink={1}>
+        <Box flexDirection="row" flexWrap="wrap" flexGrow={1} flexShrink={1} gap={0} columnGap={0} rowGap={0}>
           {row.span ? (
             <Text color={row.span.color} bold={row.span.bold} dimColor={row.span.dim} wrap="wrap">
               {row.span.text}

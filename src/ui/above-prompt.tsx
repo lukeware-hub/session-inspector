@@ -135,12 +135,12 @@ export function registerAbovePrompt(on: On): void {
     const layout = isCards ? { isFramed: isDesktop ? e.props.maxRows >= 5 : true, rows: allRows.length } : bandLayout(e.props.maxRows)
     const columns = e.props.bodyColumns - (layout.isFramed ? 4 : 0)
     const rows = allRows.slice(0, layout.rows)
-    const lines = isCards ? cardRows(ui, rows, columns, BAND_LABEL_WIDTH) : layoutGrid(rows, columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
+    const lines = isCards ? cardRows(ui, rows, columns, BAND_LABEL_WIDTH, !isDesktop) : layoutGrid(rows, columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
     if (!layout.isFramed) return <Box flexDirection="column">{lines}</Box>
 
     const mark = STATUS_MARK[state.session.status]
     return (
-      <Box flexDirection="column" borderStyle="round" borderDimColor paddingX={1}>
+      <Box flexDirection="column" borderStyle="round" borderDimColor paddingX={1} gap={0}>
         <Box flexDirection="row" justifyContent="space-between" flexWrap={isCards ? 'wrap' : undefined}>
           <Text bold color="claude">
             Session Inspector
