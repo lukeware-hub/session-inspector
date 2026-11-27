@@ -1,3 +1,5 @@
+import type { RateLimitRecord } from './models'
+
 const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
@@ -80,6 +82,15 @@ const LIMIT_LABEL: Record<string, string> = { five_hour: '5h', seven_day: '7d', 
 // A rate-limit window's short name: five_hour -> "5h".
 export function limitLabel(kind: string): string {
   return LIMIT_LABEL[kind] ?? kind.replace(/_/g, ' ')
+}
+
+// A rate-limit window as it stands now. Readings only arrive with model responses, so an
+// idle session would keep showing the old figure after the window resets; once its reset
+// time has passed, the window reads 0% until the next reading replaces it.
+export function currentLimit(limit: RateLimitRecord, now: number): RateLimitRecord {
+  const resetsAt = limit.resetsAt === undefined ? NaN : Date.parse(limit.resetsAt)
+  if (Number.isNaN(resetsAt) || resetsAt > now) return limit
+  return { kind: limit.kind, percentUsed: 0 }
 }
 
 // A path under the working folder, written relative to it with forward slashes.

@@ -9,7 +9,7 @@ import {
   parseWindowsTable,
 } from '../src/domain/host'
 import { EMPTY_SYSTEM } from '../src/domain/models'
-import { formatBytes, formatUsd, limitLabel, relativePath } from '../src/domain/formatters'
+import { currentLimit, formatBytes, formatUsd, limitLabel, relativePath } from '../src/domain/formatters'
 
 const WINDOWS = [
   '900',
@@ -83,6 +83,11 @@ describe('git and formatting', () => {
     expect(formatUsd(undefined)).toBe('—')
     expect(limitLabel('five_hour')).toBe('5h')
     expect(limitLabel('weekly_tokens')).toBe('weekly tokens')
+    const resetsAt = new Date(5_000).toISOString()
+    expect(currentLimit({ kind: 'five_hour', percentUsed: 100, resetsAt }, 4_999)).toEqual({ kind: 'five_hour', percentUsed: 100, resetsAt })
+    expect(currentLimit({ kind: 'five_hour', percentUsed: 100, resetsAt }, 5_000)).toEqual({ kind: 'five_hour', percentUsed: 0 })
+    expect(currentLimit({ kind: 'seven_day', percentUsed: 40 }, 9e12)).toEqual({ kind: 'seven_day', percentUsed: 40 })
+    expect(currentLimit({ kind: 'seven_day', percentUsed: 40, resetsAt: 'soon' }, 9e12)).toEqual({ kind: 'seven_day', percentUsed: 40, resetsAt: 'soon' })
     expect(relativePath('C:\\work\\app\\src\\a.ts', 'C:\\work\\app')).toBe('src/a.ts')
     expect(relativePath('/home/me/app/a.ts', '/home/me/app/')).toBe('a.ts')
     expect(relativePath('/etc/hosts', '/home/me/app')).toBe('/etc/hosts')
