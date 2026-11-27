@@ -1,6 +1,6 @@
 import type { On } from 'claude-code'
 
-import { formatBytes, formatDuration, formatRate, formatTokens, formatUsd, limitLabel } from '../domain/formatters'
+import { currentLimit, formatBytes, formatDuration, formatRate, formatTokens, formatUsd, limitLabel } from '../domain/formatters'
 import { activeLoopAlert } from '../domain/insights'
 import type { InspectorState, WifiRecord } from '../domain/models'
 import { activeAgents, sessionDurationMs } from '../domain/reducers'
@@ -91,11 +91,11 @@ function systemRow({ system, speed, wifi }: InspectorState): GridRow {
 }
 
 // The last row: any rate-limit windows the account reports, then turns and tools.
-function limitsRow({ usage, stats }: InspectorState): GridRow {
+function limitsRow({ usage, stats }: InspectorState, now: number): GridRow {
   return {
     label: 'Limits',
     cells: [
-      ...usage.rateLimits.map(limit => ({ label: limitLabel(limit.kind), text: meterText(limit.percentUsed), color: loadColor(limit.percentUsed) })),
+      ...usage.rateLimits.map(stored => currentLimit(stored, now)).map(limit => ({ label: limitLabel(limit.kind), text: meterText(limit.percentUsed), color: loadColor(limit.percentUsed) })),
       { label: 'turns', text: String(stats.totalTurns) },
       { label: 'tools', text: String(stats.totalToolCalls) },
     ],
@@ -110,7 +110,7 @@ function alertRow(state: InspectorState, now: number): GridRow | undefined {
 
 // The band's rows, most important first.
 export function bandRows(state: InspectorState, now: number): GridRow[] {
-  return [contextRow(state), alertRow(state, now), sessionRow(state, now), systemRow(state), limitsRow(state)].filter(
+  return [contextRow(state), alertRow(state, now), sessionRow(state, now), systemRow(state), limitsRow(state, now)].filter(
     (row): row is GridRow => row !== undefined,
   )
 }

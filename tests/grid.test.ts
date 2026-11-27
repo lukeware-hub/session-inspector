@@ -71,6 +71,15 @@ describe('band grid', () => {
     expect(lines[0]).not.toContain('forecast')
   })
 
+  test('a rate-limit window whose reset time has passed reads 0% until a new reading arrives', () => {
+    const resetsAt = new Date(10_000).toISOString()
+    const full = { ...STATE, usage: { rateLimits: [{ kind: 'five_hour', percentUsed: 100, resetsAt }] } }
+    const limitsLine = (now: number) => text(layoutGrid(bandRows(full, now), 160, BAND_LABEL_WIDTH)[3]!)
+    expect(limitsLine(9_999)).toContain(meterText(100))
+    expect(limitsLine(10_000)).toContain(meterText(0))
+    expect(limitsLine(20_000)).not.toContain('100%')
+  })
+
   test('a missing value keeps its column with a dash, and a message spans its row', () => {
     const waiting = { ...STATE, contextReadings: [], usage: { rateLimits: [] }, git: EMPTY_GIT }
     const lines = layoutGrid(bandRows(waiting, 0), 160, BAND_LABEL_WIDTH).map(text)

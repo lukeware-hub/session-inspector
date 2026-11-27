@@ -10,6 +10,7 @@ import {
   formatTokens,
   formatUsd,
   limitLabel,
+  currentLimit,
   sparkline,
 } from '../domain/formatters'
 import { activeLoopAlert, compactionLimit, forecastTurns } from '../domain/insights'
@@ -147,7 +148,7 @@ function sessions({ ui, state, now, columns }: View) {
       {heading(ui, 'Cost and limits')}
       {field(ui, 'Cost (estimate)', `${formatUsd(usage.costUsd)}${usage.hasUnknownPrice ? ', some prices unknown' : ''}`, columns)}
       {usage.rateLimits.length === 0 && field(ui, 'Rate limits', 'none reported (only subscriptions report them)', columns)}
-      {usage.rateLimits.map(limit =>
+      {usage.rateLimits.map(stored => currentLimit(stored, now)).map(limit =>
         field(
           ui,
           `Limit ${limitLabel(limit.kind)}`,
