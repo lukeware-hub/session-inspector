@@ -20,6 +20,8 @@ export type Session = {
   breakdown?: Partial<SessionContextBreakdown>
   // The live agent list the engine answers, by id and status.
   liveAgents?: { id: string; status: string }[]
+  // The session's total cost the engine answers; read at each call so a test can change it.
+  costUsd?: number
 }
 
 // Stands for the engine beneath the plugin: each hook answers as a session does.
@@ -46,6 +48,7 @@ export function stubEngine(on: On, session: Session = { id: SESSION_ID }) {
       // A partial breakdown stands for the engine's: the mod reads only the fields a test sets.
       context: { tokens: session.tokens, window: 200_000, breakdown: session.breakdown as SessionContextBreakdown | undefined },
       rateLimits: [],
+      cost: session.costUsd === undefined ? undefined : { usd: session.costUsd },
     },
   }))
   on('command.register', (_, e) => {

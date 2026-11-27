@@ -53,17 +53,21 @@ export function subagentsSegment(agents: InspectorState['agents']): Segment {
 }
 
 function sessionRow(state: InspectorState, now: number): GridRow {
-  const { agents, usage, git } = state
-  const hasLines = git.isRepo && git.checkedAt !== undefined
+  const { agents, usage } = state
   return {
     label: 'Session',
     cells: [
       { label: 'time', text: formatDuration(sessionDurationMs(state.session, now)) },
       subagentsSegment(agents),
       usage.costUsd === undefined ? missing('cost') : { label: 'cost', text: formatUsd(usage.costUsd) },
-      hasLines
-        ? { label: 'lines', text: `+${git.added}`, color: 'diffAdded', more: [{ text: ` −${git.removed}`, color: 'diffRemoved' }], optional: true }
-        : missing('lines', true),
+      // Lines Edit and Write changed, as /usage counts them; the git count is in the pane's Files tab.
+      {
+        label: 'lines',
+        text: `+${usage.linesAdded ?? 0}`,
+        color: 'diffAdded',
+        more: [{ text: ` −${usage.linesRemoved ?? 0}`, color: 'diffRemoved' }],
+        optional: true,
+      },
     ],
   }
 }

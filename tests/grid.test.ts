@@ -84,7 +84,7 @@ describe('band grid', () => {
     const waiting = { ...STATE, contextReadings: [], usage: { rateLimits: [] }, git: EMPTY_GIT }
     const lines = layoutGrid(bandRows(waiting, 0), 160, BAND_LABEL_WIDTH).map(text)
     expect(lines[0]).toBe('Context  waiting for the first response')
-    expect(lines[1]).toMatch(/cost\s+—\s+lines\s+—$/)
+    expect(lines[1]).toMatch(/cost\s+—\s+lines\s+\+0 −0$/)
     expect(lines[3]).toMatch(/^Limits\s+turns\s+14\s+tools\s+151$/)
   })
 })
