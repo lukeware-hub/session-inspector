@@ -6,19 +6,24 @@ Session Inspector is a Claude Code mod (a plugin of function hooks) that watches
 
 ## Features
 
-- **Footer band**: a framed panel fixed right above the prompt, always visible:
+- **Footer band**: a framed panel fixed right above the prompt, always visible. In the terminal it is one table whose cells share their lines:
 
   ```
-  ╭───────────────────────────────────────────────────────────────────────────────────────╮
-  │ Session Inspector                          claude-opus-5-5   effort high   ● running  │
-  │ Context  used ████░░░░░░ 45%   tokens 454k / 1M   level Normal                        │
-  │ Session  time 1h 14m   subagents 2 running of 5   cost $19.35   lines +37 −2            │
-  │ System   CPU █░░░░░░░░░ 5%   RAM 713 MB   speed 99 tok/s   wifi ↓ 171 Kbps ↑ 75 Kbps  │
-  │ Limits   5h ██░░░░░░░░ 16%   7d ░░░░░░░░░░ 3%   turns 8   tools 82                    │
-  ╰───────────────────────────────────────────────────────────────────────────────────────╯
+  ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+  │ Session Inspector                                                            claude-opus-5-5   effort high   ● running │
+  │          ╭────────────────────────┬────────────────────────────┬─────────────────┬───────────────────────────────────╮ │
+  │ Context  │ used ████░░░░░░  45%   │ tokens 454k / 1M           │ level Normal    │ forecast ≈32 turns to compaction  │ │
+  │          ├────────────────────────┼────────────────────────────┼─────────────────┼───────────────────────────────────┤ │
+  │ Session  │ time 1h 14m            │ subagents 2 running of 5   │ cost $19.35     │ lines +37 −2                      │ │
+  │          ├────────────────────────┼────────────────────────────┼─────────────────┼───────────────────────────────────┤ │
+  │ System   │ CPU █░░░░░░░░░   5%    │ RAM 713 MB                 │ speed 99 tok/s  │ wifi ↓ 171 Kbps ↑ 75 Kbps         │ │
+  │          ├────────────────────────┼────────────────────────────┼─────────────────┼───────────────────────────────────┤ │
+  │ Limits   │ 5h ██░░░░░░░░  16%     │ 7d ░░░░░░░░░░   3%         │ turns 8         │ tools 82                          │ │
+  │          ╰────────────────────────┴────────────────────────────┴─────────────────┴───────────────────────────────────╯ │
+  ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
   ```
 
-  Every figure has a label, every percentage uses the same ten-cell scale, the header shows the effort of the last request, and the Session row counts the subagents working right now. The Limits row appears when the account reports rate limits. When the band has less than five rows of room it drops the frame and keeps the rows.
+  In the Claude desktop app the same figures are bordered cards in four columns that line up in every row. Every figure has a label, every percentage uses the same ten-cell scale, the header shows the effort of the last request, and the Session row counts the subagents working right now. As the band narrows, the optional figures (forecast, lines, speed, wifi) leave first, then whole columns from the right. A terminal without room for the table shows each row on one line instead, and below five rows of room the frame is dropped.
 - **Inspector pane**: opened with `/inspector`, with eight sections you switch with the buttons or the keys 1 to 8:
   - **Overview**: status, model, context usage and window, tokens used, turns, tool calls, subagents, cost, lines changed, speed, CPU and memory, duration, last activity and event count.
   - **Context**: tokens in context, window size, tokens available, level, where auto-compaction runs, growth per turn and turns left, compactions, what fills the window (system prompt, tools, memory, messages), what loads on every turn (memory files, MCP servers, skills, agents), the largest tool results, and the last 12 readings.
@@ -44,27 +49,48 @@ Only real data from the session is shown. A value Claude Code has not reported y
 
 ## Install
 
-You need Claude Code installed.
+One install serves both the Claude Code terminal and the Claude desktop app: they share the same plugin folder (`~/.claude`).
 
-**In the Claude Code terminal**, type at the prompt:
+### Quick install (recommended)
+
+1. Open a terminal (on Windows: PowerShell or Git Bash).
+2. Run:
+
+   ```
+   claude plugin install session-inspector --marketplace lukeware-hub/session-inspector --scope user
+   ```
+
+3. Restart Claude Code and the Claude desktop app.
+4. Done: the Session Inspector band appears above the prompt in both, and `/inspector` opens the pane.
+
+### Inside Claude Code
+
+Prefer the prompt? Type `/plugin install session-inspector --marketplace lukeware-hub/session-inspector`, answer `y` to add the marketplace, press Enter to install for your user, then type `/reload-plugins`.
+
+### From the Claude desktop app menus
+
+Without a terminal: click **+** next to the prompt box, then **Plugins**, **Add marketplace**, type `lukeware-hub/session-inspector`, then **Add plugin**. This installs it for the Claude Code terminal too.
+
+### Update
 
 ```
-/plugin install session-inspector --marketplace lukeware-hub/session-inspector
+claude plugin marketplace update session-inspector
+claude plugin update session-inspector@session-inspector --scope user
 ```
 
-1. Answer `y` to add the marketplace.
-2. Press Enter to install for your user (all your projects).
-3. Done: the Session Inspector band appears above the prompt, and `/inspector` opens the pane.
+Then restart Claude Code and the Claude desktop app. Releases are listed on the [releases page](https://github.com/lukeware-hub/session-inspector/releases).
 
-**From a shell**, the same in one line:
+### Check it is installed
 
 ```
-claude plugin install session-inspector --marketplace lukeware-hub/session-inspector
+claude plugin list
 ```
 
-**In the Claude desktop app**: click **+** next to the prompt box, then **Plugins**, **Add marketplace**, type `lukeware-hub/session-inspector`, then **Add plugin**.
+`session-inspector@session-inspector` should show the latest version and `enabled`.
 
-To try it from a local copy without installing:
+### Try it without installing
+
+From a local copy of this repository:
 
 ```
 claude --plugin-dir .
@@ -73,8 +99,10 @@ claude --plugin-dir .
 ## Uninstall
 
 ```
-/plugin uninstall session-inspector
+claude plugin uninstall session-inspector@session-inspector --scope user
 ```
+
+Inside Claude Code: `/plugin uninstall session-inspector`. Either way it is removed from both the terminal and the desktop app.
 
 ## Configuration
 
