@@ -95,44 +95,74 @@ export function layoutGrid(rows: readonly GridRow[], columns: number, labelWidth
   })
 }
 
-// Below this many cells of width the desktop band keeps only the figures that are not optional.
+// Below this many cells of width the card band keeps only the figures that are not optional.
 export const NARROW_COLUMNS = 72
 
-// The desktop draws a proportional font, so cells cannot be counted into columns: each row is a label and
-// its figures as blocks that wrap onto the next line when the room runs out, never cut or misaligned.
-export function flowRows(ui: Ui, rows: readonly GridRow[], columns: number, labelWidth: number) {
+// Card columns by the room the cards have: four across, then two, then one.
+export function cardColumns(room: number): 1 | 2 | 4 {
+  if (room >= 84) return 4
+  if (room >= 44) return 2
+  return 1
+}
+
+// Each card costs three lines (border, label, value), so the terminal draws cards only when the band has room for every row.
+export const CARD_ROW_LINES = 3
+
+export function cardsFit(maxRows: number, rowCount: number): boolean {
+  return maxRows >= 3 + rowCount * CARD_ROW_LINES
+}
+
+// One figure as a card: its dim label on top, its value below; a watch or danger value colors the border too.
+function card(ui: Ui, cell: Segment | undefined, width: string) {
   const { Box, Text } = ui
-  const isNarrow = columns < NARROW_COLUMNS
-  return rows.map(row => (
-    <Box flexDirection="row" columnGap={1}>
-      <Box width={labelWidth} flexShrink={0}>
-        <Text dimColor>{row.label}</Text>
-      </Box>
-      <Box flexDirection="row" flexWrap="wrap" columnGap={3} flexGrow={1} flexShrink={1}>
-        {row.span ? (
-          <Text color={row.span.color} bold={row.span.bold} dimColor={row.span.dim} wrap="wrap">
-            {row.span.text}
+  if (!cell) return <Box width={width} flexShrink={0} />
+  const isAlert = cell.color === 'warning' || cell.color === 'error'
+  return (
+    <Box width={width} flexShrink={0} flexDirection="column" borderStyle="round" borderColor={isAlert ? cell.color : undefined} borderDimColor={!isAlert} paddingX={1}>
+      <Text dimColor>{cell.label ?? ' '}</Text>
+      <Box flexDirection="row">
+        <Text color={cell.color} bold={cell.bold} dimColor={cell.dim}>
+          {cell.text}
+        </Text>
+        {(cell.more ?? []).map(part => (
+          <Text color={part.color} bold={part.bold} dimColor={part.dim}>
+            {part.text}
           </Text>
-        ) : (
-          row.cells
-            .filter(cell => !(isNarrow && cell.optional))
-            .map(cell => (
-              <Box flexDirection="row" columnGap={1} flexShrink={0}>
-                {cell.label && <Text dimColor>{cell.label}</Text>}
-                <Text color={cell.color} bold={cell.bold} dimColor={cell.dim}>
-                  {cell.text}
-                </Text>
-                {(cell.more ?? []).map(part => (
-                  <Text color={part.color} bold={part.bold} dimColor={part.dim}>
-                    {part.text.trim()}
-                  </Text>
-                ))}
-              </Box>
-            ))
-        )}
+        ))}
       </Box>
     </Box>
-  ))
+  )
+}
+
+// The band as rows of equal cards: a narrow dim label column, then the figures as cards in a grid whose columns line up
+// in every row (empty slots hold the place), wrapping to fewer columns as the room shrinks. Spans stay one line of text.
+export function cardRows(ui: Ui, rows: readonly GridRow[], columns: number, labelWidth: number) {
+  const { Box, Text } = ui
+  const room = Math.max(1, columns - labelWidth)
+  const across = cardColumns(room)
+  const width = `${100 / across}%`
+  const isNarrow = columns < NARROW_COLUMNS
+  return rows.map(row => {
+    const cells = row.cells.filter(cell => !(isNarrow && cell.optional))
+    const slots = Math.max(cells.length, 1)
+    const padded = across === 1 ? slots : Math.ceil(slots / across) * across
+    return (
+      <Box flexDirection="row">
+        <Box width={labelWidth} flexShrink={0}>
+          <Text dimColor>{row.label}</Text>
+        </Box>
+        <Box flexDirection="row" flexWrap="wrap" flexGrow={1} flexShrink={1}>
+          {row.span ? (
+            <Text color={row.span.color} bold={row.span.bold} dimColor={row.span.dim} wrap="wrap">
+              {row.span.text}
+            </Text>
+          ) : (
+            Array.from({ length: padded }, (_, index) => card(ui, cells[index], width))
+          )}
+        </Box>
+      </Box>
+    )
+  })
 }
 
 // One laid-out line as a row of painted texts.

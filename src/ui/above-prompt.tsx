@@ -10,7 +10,8 @@ import {
   LEVEL_COLOR,
   STATUS_MARK,
   forecastSegment,
-  flowRows,
+  cardRows,
+  cardsFit,
   gridLine,
   layoutGrid,
   loadColor,
@@ -128,21 +129,23 @@ export function registerAbovePrompt(on: On): void {
     const { Box, Text } = ui
     const [state, now] = await Promise.all([readState($), $.clock.now()])
     const isDesktop = e.surface === 'desktop'
-    // The desktop wraps its figures, so it keeps every row and lets the band's own scroll take the height.
-    const layout = isDesktop ? { isFramed: e.props.maxRows >= 5, rows: BAND_MAX_ROWS } : bandLayout(e.props.maxRows)
+    const allRows = bandRows(state, now)
+    // Cards need three lines a row: the desktop always draws them (the band scrolls past its height); the terminal only with room to spare.
+    const isCards = isDesktop || cardsFit(e.props.maxRows, allRows.length)
+    const layout = isCards ? { isFramed: isDesktop ? e.props.maxRows >= 5 : true, rows: allRows.length } : bandLayout(e.props.maxRows)
     const columns = e.props.bodyColumns - (layout.isFramed ? 4 : 0)
-    const rows = bandRows(state, now).slice(0, isDesktop ? undefined : layout.rows)
-    const lines = isDesktop ? flowRows(ui, rows, columns, BAND_LABEL_WIDTH) : layoutGrid(rows, columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
+    const rows = allRows.slice(0, layout.rows)
+    const lines = isCards ? cardRows(ui, rows, columns, BAND_LABEL_WIDTH) : layoutGrid(rows, columns, BAND_LABEL_WIDTH).map(parts => gridLine(ui, parts))
     if (!layout.isFramed) return <Box flexDirection="column">{lines}</Box>
 
     const mark = STATUS_MARK[state.session.status]
     return (
       <Box flexDirection="column" borderStyle="round" borderDimColor paddingX={1}>
-        <Box flexDirection="row" justifyContent="space-between" flexWrap={isDesktop ? 'wrap' : undefined}>
+        <Box flexDirection="row" justifyContent="space-between" flexWrap={isCards ? 'wrap' : undefined}>
           <Text bold color="claude">
             Session Inspector
           </Text>
-          <Box flexDirection="row" columnGap={3} flexWrap={isDesktop ? 'wrap' : undefined}>
+          <Box flexDirection="row" columnGap={3} flexWrap={isCards ? 'wrap' : undefined}>
             {state.session.model && <Text dimColor>{state.session.model}</Text>}
             {state.session.effort && <Text dimColor>{`effort ${state.session.effort}`}</Text>}
             <Text color={mark.color} dimColor={!mark.color}>
