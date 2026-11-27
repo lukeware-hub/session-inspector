@@ -82,3 +82,32 @@ test('cost and account limits also refresh when Claude finishes a response, with
   expect((await texts(band)).join('')).toContain('9%')
   await band.unmount()
 })
+
+test('lines made before the inspector loaded are counted from the transcript, subagents included', async ($, on) => {
+  const edit = (id: string, result: unknown) => ({ tool_use_id: id, tool: 'Edit', input: {}, result })
+  on('session.messages', (_, e) => {
+    if (e.agentId === 'agent-1') return { value: [{ role: 'assistant', text: '', toolUses: [edit('s1', { structuredPatch: [HUNK] })] }] }
+    return {
+      value: [
+        { role: 'user', text: 'hi', toolUses: [] },
+        {
+          role: 'assistant',
+          text: '',
+          toolUses: [
+            edit('m1', { structuredPatch: [HUNK] }),
+            { tool_use_id: 'm2', tool: 'Write', input: {}, result: { type: 'create', structuredPatch: [], content: 'a\nb\n' } },
+            { ...edit('m3', 'refused'), isError: true },
+            { tool_use_id: 'm4', tool: 'Agent', input: {}, result: {}, agentId: 'agent-1' },
+          ],
+        },
+      ],
+    }
+  })
+  const { clock } = stubEngine(on, { id: SESSION_ID })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await clock.settle()
+  const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(after(await texts(band), 'lines')).toBe('+6')
+  expect(await texts(band)).toContain(' −2')
+  await band.unmount()
+})

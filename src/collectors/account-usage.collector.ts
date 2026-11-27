@@ -1,5 +1,6 @@
 import type { Timer } from 'claude-code'
 
+import { conversationLines } from '../domain/code-lines'
 import { ACCOUNT_USAGE_HEADERS, ACCOUNT_USAGE_URL, parseAccountUsage } from '../domain/account-usage'
 import { changeUsage, type Engine } from '../state/repository'
 import { inBackground } from './host.collector'
@@ -61,4 +62,23 @@ export function startAccountUsagePoller($: Engine): void {
   accountUsageTimer?.cancel()
   inBackground(refreshAccountUsage($))
   accountUsageTimer = $.clock.every(ACCOUNT_USAGE_EVERY_MS, () => inBackground(refreshAccountUsage($)))
+}
+
+// Counts the lines Edit and Write changed from the transcript: the main conversation and the
+// subagents it started. Run when the inspector loads, so edits made before it (an install or
+// reload mid-session) count too. A figure only grows: rows lost to a compaction never lower it.
+export async function recountLines($: Engine): Promise<void> {
+  const messages = await $.session.messages()
+  const uses = messages.flatMap(message => message.toolUses)
+  const agentIds = uses.flatMap(use => (use.agentId ? [use.agentId] : []))
+  for (const agentId of agentIds) {
+    const agent = await $.session.messages({ agentId })
+    if (Array.isArray(agent)) uses.push(...agent.flatMap(message => message.toolUses))
+  }
+  const counted = conversationLines(uses)
+  await changeUsage($, current => ({
+    ...current,
+    linesAdded: Math.max(current.linesAdded ?? 0, counted.added),
+    linesRemoved: Math.max(current.linesRemoved ?? 0, counted.removed),
+  }))
 }
