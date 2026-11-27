@@ -77,7 +77,7 @@ export function formatUsd(usd: number | undefined): string {
   return usd === undefined || !Number.isFinite(usd) ? '—' : `$${usd.toFixed(2)}`
 }
 
-const LIMIT_LABEL: Record<string, string> = { five_hour: '5h', seven_day: '7d', seven_day_opus: '7d Opus', spend_limit: 'spend' }
+const LIMIT_LABEL: Record<string, string> = { five_hour: '5h', seven_day: '7d', seven_day_opus: '7d Opus', seven_day_sonnet: '7d Sonnet',spend_limit: 'spend' }
 
 // A rate-limit window's short name: five_hour -> "5h".
 export function limitLabel(kind: string): string {
