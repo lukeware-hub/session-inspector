@@ -2,6 +2,12 @@
 
 All notable changes to this project are written here. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- The README has a short install tutorial: one command installs the mod for both the Claude Code terminal and the Claude desktop app, with the desktop menu path, update, check and uninstall steps; its band example shows the terminal table.
+
 ## [0.4.2] - 2026-11-27
 
 ### Changed
